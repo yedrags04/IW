@@ -1,44 +1,48 @@
 package com.example.vaadinweb.views;
 
-import com.example.vaadinweb.model.Producto;
-import com.example.vaadinweb.repository.ProductoRepository;
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.applayout.AppLayout;
+import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.html.H1;
-import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.vaadin.flow.router.Route;
 
 @Route("")
 @AnonymousAllowed
-public class MainView extends VerticalLayout {
+public class MainView extends AppLayout {
 
-    private final ProductoRepository productoRepository;
+    public MainView() {
+        DrawerToggle toggle = new DrawerToggle();
+        H1 title = new H1("🍔 Comida Rápida");
+        title.getStyle().set("margin", "0").set("font-size", "1.5em");
 
-    @Autowired
-    public MainView(ProductoRepository productoRepository) {
-        this.productoRepository = productoRepository;
+        HorizontalLayout header = new HorizontalLayout(toggle, title);
+        header.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
+        header.setWidthFull();
+        header.setPadding(true);
+        header.getStyle().set("background", "#f3f3f3");
 
-        // Diseño original
-        setSpacing(true);
-        setPadding(true);
-        setAlignItems(Alignment.CENTER);
+        addToNavbar(header);
 
-        H1 title = new H1("🍔 Bienvenido a Comida Rápida");
+        RouterLink verProductos = new RouterLink();
+        verProductos.setText("Ver productos");
+        verProductos.setRoute(ProductosView.class);
+        verProductos.add(new Icon(VaadinIcon.LIST));
 
-        Button boton = new Button("Haz tu pedido", e ->
-            Notification.show("Esta es la vista principal, pronto podrás hacer pedidos 🍟")
-        );
+        RouterLink añadirProducto = new RouterLink();
+        añadirProducto.setText("Añadir producto");
+        añadirProducto.setRoute(AñadirProductoView.class);
+        añadirProducto.add(new Icon(VaadinIcon.PLUS));
 
-        // Nueva sección: tabla de productos
-        Grid<Producto> grid = new Grid<>(Producto.class);
-        grid.setColumns("id", "nombre", "precio", "categoria");
-        grid.setItems(productoRepository.findAll());
-        grid.setWidth("80%");
+        VerticalLayout drawerContent = new VerticalLayout(verProductos, añadirProducto);
+        drawerContent.setPadding(true);
+        drawerContent.setSpacing(true);
 
-        // Añadir todo a la vista
-        add(title, boton, grid);
+        addToDrawer(drawerContent);
     }
 }

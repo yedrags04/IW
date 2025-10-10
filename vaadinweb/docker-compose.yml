@@ -11,23 +11,24 @@ services:
       MYSQL_PASSWORD: LOLALOLITA
     ports:
       - "3306:3306"
-    volumes: []
+    volumes:
+      - ./mysql-init:/docker-entrypoint-initdb.d
     networks:
       - vaadin-net
 
-  vaadinweb:
+  vaadin_app:
     build: .
     container_name: vaadin_app
     ports:
       - "8080:8080"
     depends_on:
       - mysql
-    networks:
-      - vaadin-net
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ComidaRapida?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ComidaRapida
       SPRING_DATASOURCE_USERNAME: IW
       SPRING_DATASOURCE_PASSWORD: LOLALOLITA
+    networks:
+      - vaadin-net
 
 networks:
   vaadin-net:
