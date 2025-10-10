@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: vaadin_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ComidaRapida
+      MYSQL_USER: IW
+      MYSQL_PASSWORD: LOLALOLITA
+    ports:
+      - "3306:3306"
+    volumes: []
+    networks:
+      - vaadin-net
+
+  vaadinweb:
+    build: .
+    container_name: vaadin_app
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql
+    networks:
+      - vaadin-net
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ComidaRapida?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: IW
+      SPRING_DATASOURCE_PASSWORD: LOLALOLITA
+
+networks:
+  vaadin-net:
