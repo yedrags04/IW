@@ -5,9 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 public class VaadinwebApplication {
-
-	public static void main(String[] args) {
-		SpringApplication.run(VaadinwebApplication.class, args);
-	}
-
+    public static void main(String[] args) {
+        SpringApplication.run(VaadinwebApplication.class, args);
+    }
 }
