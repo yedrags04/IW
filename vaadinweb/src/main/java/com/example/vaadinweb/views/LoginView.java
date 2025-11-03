@@ -9,6 +9,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 
 @Route("login")
@@ -28,7 +29,11 @@ public class LoginView extends VerticalLayout {
             var encontrado = usuarioRepo.findByNombreAndContrasena(
                 usuario.getValue(), contrasena.getValue()
             );
+
             if (encontrado.isPresent()) {
+                // ✅ Guardar usuario en sesión
+                VaadinSession.getCurrent().setAttribute("usuario", encontrado.get());
+
                 Notification.show("✅ Inicio de sesión correcto");
                 getUI().ifPresent(ui -> ui.navigate("")); // volver a la vista principal
             } else {
