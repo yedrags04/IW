@@ -14,75 +14,83 @@ import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
+import com.vaadin.flow.component.UI;
 
 @Route("")
 @AnonymousAllowed
 public class MainView extends AppLayout {
 
-    private final Button userButton = new Button(new Icon(VaadinIcon.USER));
-    private final Button logoutButton = new Button("Cerrar sesión", new Icon(VaadinIcon.SIGN_OUT));
-
     public MainView() {
+
+        String currentRole = (String) VaadinSession.getCurrent().getAttribute("userRole");
+        boolean isAdmin = "ADMIN".equals(currentRole);
+        boolean isLoggedIn = VaadinSession.getCurrent().getAttribute("userName") != null; 
+        
         DrawerToggle toggle = new DrawerToggle();
+        toggle.getElement().setAttribute("aria-label", "Menu toggle");
 
         H1 title = new H1("🍔 Comida Rápida");
         title.getStyle()
-                .set("margin", "20px auto")
-                .set("font-size", "3em")
+                .set("margin", "0")
+                .set("font-size", "var(--lumo-font-size-xxxl)")
                 .set("font-weight", "bold")
-                .set("text-align", "center");
+                .set("color", "var(--lumo-primary-color)");
 
-        // 🔹 Verificar si hay usuario en sesión
-        Object usuario = VaadinSession.getCurrent().getAttribute("usuario");
+        // Botón Carrito — ahora con estilo primario y sombra
+        Button cartButton = new Button("Carrito", new Icon(VaadinIcon.CART));
+        cartButton.getElement().setAttribute("theme", "primary");
+        cartButton.setVisible(isLoggedIn);
+        cartButton.addClickListener(e -> UI.getCurrent().navigate("carrito"));
 
-        // 🔹 Botón de login
-        userButton.getElement().setAttribute("theme", "tertiary-inline");
-        userButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("login")));
+        Button loginButton = new Button("Iniciar Sesión", new Icon(VaadinIcon.SIGN_IN));
+        loginButton.getElement().setAttribute("theme", "primary");
+        loginButton.addClickListener(e -> UI.getCurrent().navigate("login"));
 
-        // 🔹 Botón de logout
-        logoutButton.getElement().setAttribute("theme", "tertiary-inline");
+        Button logoutButton = new Button("Cerrar Sesión", new Icon(VaadinIcon.SIGN_OUT));
+        logoutButton.getElement().setAttribute("theme", "tertiary contrast");
         logoutButton.addClickListener(e -> {
-            VaadinSession.getCurrent().setAttribute("usuario", null); // eliminar de sesión
+            VaadinSession.getCurrent().setAttribute("userName", null);
+            VaadinSession.getCurrent().setAttribute("userRole", null);
             Notification.show("👋 Sesión cerrada");
-            getUI().ifPresent(ui -> {
-                ui.navigate("");     // volver a inicio
-                ui.getPage().reload(); // recargar para actualizar el header
-            });
+            UI.getCurrent().getPage().reload();
         });
 
-        // 🔹 Header dinámico
-        HorizontalLayout header = new HorizontalLayout();
-        header.setWidthFull();
-        header.setAlignItems(FlexComponent.Alignment.CENTER);
-        header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+        // 🔥 Contenedor de los botones de la derecha
+        HorizontalLayout rightControls = new HorizontalLayout();
+        rightControls.setSpacing(true);
+        rightControls.setAlignItems(FlexComponent.Alignment.CENTER);
 
-        HorizontalLayout centerTitle = new HorizontalLayout(title);
-        centerTitle.setWidthFull();
-        centerTitle.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
-        centerTitle.setAlignItems(FlexComponent.Alignment.CENTER);
-
-        // 🔹 Mostrar botón según estado de sesión
-        if (usuario != null) {
-            header.add(toggle, centerTitle, logoutButton);
+        if (isLoggedIn) {
+            rightControls.add(cartButton, logoutButton);
         } else {
-            header.add(toggle, centerTitle, userButton);
+            rightControls.add(loginButton);
         }
 
-        header.setFlexGrow(1, centerTitle);
+        // Header final con título centrado REAL
+        HorizontalLayout header = new HorizontalLayout(toggle, title, rightControls);
+        header.setWidthFull();
+        header.setAlignItems(FlexComponent.Alignment.CENTER);
+        header.expand(title); // <— CLAVE: Esto mantiene el título centrado SIEMPRE
         header.getStyle()
-                .set("background", "#f3f3f3")
-                .set("padding", "0.5em 1em");
+                .set("background", "var(--lumo-contrast-5pct)")
+                .set("padding", "var(--lumo-space-m)")
+                .set("border-bottom", "1px solid var(--lumo-contrast-10pct)");
 
         addToNavbar(header);
 
-        // 🔹 Menú lateral
         RouterLink verProductos = new RouterLink("Ver productos", ProductosView.class);
-        RouterLink añadirProducto = new RouterLink("Añadir producto", AñadirProductoView.class);
-        añadirProducto.add(new Icon(VaadinIcon.PLUS));
+        verProductos.getElement().setAttribute("theme", "menu-item");
 
-        VerticalLayout drawerContent = new VerticalLayout(verProductos, añadirProducto);
+        VerticalLayout drawerContent = new VerticalLayout(verProductos);
+        drawerContent.setPadding(true);
+
+        if (isAdmin) {
+            RouterLink añadirProducto = new RouterLink("Añadir producto", AñadirProductoView.class);
+            añadirProducto.add(new Icon(VaadinIcon.PLUS_CIRCLE));
+            drawerContent.add(añadirProducto);
+        }
+
         addToDrawer(drawerContent);
-
         setDrawerOpened(false);
     }
 }

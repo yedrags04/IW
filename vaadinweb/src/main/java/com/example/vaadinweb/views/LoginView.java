@@ -12,6 +12,7 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 
+
 @Route("login")
 @AnonymousAllowed
 public class LoginView extends VerticalLayout {
@@ -20,27 +21,34 @@ public class LoginView extends VerticalLayout {
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.CENTER);
 
-        H1 title = new H1("🔐 Iniciar Sesión");
-
-        TextField usuario = new TextField("Usuario");
-        PasswordField contrasena = new PasswordField("Contraseña");
+        // 📝 DECLARACIÓN DE COMPONENTES AL INICIO
+        H1 title = new H1("🔐 Iniciar Sesión"); // 👈 Declaración movida aquí
+        TextField usuario = new TextField("Usuario"); // 👈 Declaración movida aquí
+        PasswordField contrasena = new PasswordField("Contraseña"); // 👈 Declaración movida aquí
 
         Button entrar = new Button("Entrar", e -> {
+            // Aquí 'usuario' y 'contrasena' son visibles (en scope)
             var encontrado = usuarioRepo.findByNombreAndContrasena(
                 usuario.getValue(), contrasena.getValue()
             );
 
             if (encontrado.isPresent()) {
-                // ✅ Guardar usuario en sesión
-                VaadinSession.getCurrent().setAttribute("usuario", encontrado.get());
+                var usuarioEncontrado = encontrado.get();
+                
+                // 1. Guardamos el nombre de usuario
+                VaadinSession.getCurrent().setAttribute("userName", usuarioEncontrado.getNombre());
+                
+                // 2. 🔑 GUARDAMOS EL ROL EN LA SESIÓN (usa getRol() del modelo actualizado)
+                VaadinSession.getCurrent().setAttribute("userRole", usuarioEncontrado.getRol());
 
-                Notification.show("✅ Inicio de sesión correcto");
+                Notification.show("✅ Inicio de sesión correcto. Rol: " + usuarioEncontrado.getRol());
                 getUI().ifPresent(ui -> ui.navigate("")); // volver a la vista principal
             } else {
                 Notification.show("❌ Usuario o contraseña incorrectos");
             }
         });
-
+        
+        // 📝 Añadir todos los componentes al layout
         add(title, usuario, contrasena, entrar);
     }
 }

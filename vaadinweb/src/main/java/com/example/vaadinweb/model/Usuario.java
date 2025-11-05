@@ -15,12 +15,17 @@ public class Usuario {
 
     @Column(nullable = false)
     private String contrasena;
+    
+    // 🔑 Campo nuevo para almacenar el rol del usuario
+    @Column(nullable = false)
+    private String rol; 
 
     public Usuario() {}
 
-    public Usuario(String nombre, String contrasena) {
+    public Usuario(String nombre, String contrasena, String rol) {
         this.nombre = nombre;
         this.contrasena = contrasena;
+        this.rol = rol;
     }
 
     public Long getId() {
@@ -41,5 +46,14 @@ public class Usuario {
 
     public void setContrasena(String contrasena) {
         this.contrasena = contrasena;
+    }
+    
+    // 👈 Getters y Setters para el nuevo campo 'rol'
+    public String getRol() {
+        return rol;
+    }
+
+    public void setRol(String rol) {
+        this.rol = rol;
     }
 }

@@ -9,15 +9,21 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.server.auth.AnonymousAllowed;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
+import com.vaadin.flow.server.VaadinSession;
 import org.springframework.beans.factory.annotation.Autowired;
 
+// Se elimina @AnonymousAllowed
 @Route("nuevo-producto")
-@AnonymousAllowed
-public class AñadirProductoView extends VerticalLayout {
+public class AñadirProductoView extends VerticalLayout implements BeforeEnterObserver {
 
+    private final ProductoRepository productoRepository;
+    
     @Autowired
     public AñadirProductoView(ProductoRepository productoRepository) {
+        this.productoRepository = productoRepository;
+        
         setPadding(true);
         setSpacing(true);
 
@@ -49,26 +55,37 @@ public class AñadirProductoView extends VerticalLayout {
             categoria.clear();
         });
 
-Button volver = new Button("← Volver a productos", event ->
-    event.getSource().getUI().ifPresent(ui -> ui.navigate("productos"))
-);
-
-volver.getStyle().set("background-color", "#6c757d")
-                 .set("color", "white")
-                 .set("border-radius", "5px");
-
-
-        guardar.getStyle().set("background-color", "#28a745")
-                          .set("color", "white")
-                          .set("border-radius", "5px");
+        Button volver = new Button("← Volver a productos", event ->
+            event.getSource().getUI().ifPresent(ui -> ui.navigate("productos"))
+        );
 
         volver.getStyle().set("background-color", "#6c757d")
                          .set("color", "white")
                          .set("border-radius", "5px");
 
+
+        guardar.getStyle().set("background-color", "#28a745")
+                          .set("color", "white")
+                          .set("border-radius", "5px");
+        
+        // Esta línea estaba duplicada y se deja la de arriba.
+
         FormLayout form = new FormLayout(nombre, precio, categoria, guardar);
         form.setWidth("400px");
 
         add(form, volver);
+    }
+
+    @Override
+    public void beforeEnter(BeforeEnterEvent event) {
+        String role = (String) VaadinSession.getCurrent().getAttribute("userRole");
+
+        // Si el rol NO es "ADMIN"
+        if (!"ADMIN".equals(role)) {
+            event.rerouteTo(ProductosView.class);
+            
+
+            Notification.show("🚫 Acceso denegado. Solo administradores pueden añadir productos.", 3000, Notification.Position.MIDDLE);
+        }
     }
 }
