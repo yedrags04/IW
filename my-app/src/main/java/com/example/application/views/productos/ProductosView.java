@@ -1,5 +1,7 @@
 package com.example.application.views.productos;
 
+import com.example.application.model.Producto; 
+import com.example.application.repository.ProductoRepository; 
 import com.vaadin.flow.component.HasComponents;
 import com.vaadin.flow.component.HasStyle;
 import com.vaadin.flow.component.html.H2;
@@ -22,6 +24,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility.Margin;
 import com.vaadin.flow.theme.lumo.LumoUtility.MaxWidth;
 import com.vaadin.flow.theme.lumo.LumoUtility.Padding;
 import com.vaadin.flow.theme.lumo.LumoUtility.TextColor;
+import java.util.List; // <-- IMPORTAMOS LIST
 import org.vaadin.lineawesome.LineAwesomeIconUrl;
 
 @PageTitle("productos")
@@ -30,23 +33,28 @@ import org.vaadin.lineawesome.LineAwesomeIconUrl;
 public class ProductosView extends Main implements HasComponents, HasStyle {
 
     private OrderedList imageContainer;
+    private final ProductoRepository productoRepository; // <-- AÑADIDO
 
-    public ProductosView() {
+    // --- Constructor modificado para INYECTAR el Repositorio ---
+    public ProductosView(ProductoRepository productoRepository) {
+        this.productoRepository = productoRepository; // <-- AÑADIDO
+        
         constructUI();
+        cargarProductos(); // <-- AÑADIDO
+    }
 
-        imageContainer.add(new ProductosViewCard("Snow mountains under stars",
-                "https://images.unsplash.com/photo-1519681393784-d120267933ba?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=750&q=80"));
-        imageContainer.add(new ProductosViewCard("Snow covered mountain",
-                "https://images.unsplash.com/photo-1512273222628-4daea6e55abb?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=750&q=80"));
-        imageContainer.add(new ProductosViewCard("River between mountains",
-                "https://images.unsplash.com/photo-1536048810607-3dc7f86981cb?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=375&q=80"));
-        imageContainer.add(new ProductosViewCard("Milky way on mountains",
-                "https://images.unsplash.com/photo-1515705576963-95cad62945b6?ixlib=rb-1.2.1&ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&auto=format&fit=crop&w=750&q=80"));
-        imageContainer.add(new ProductosViewCard("Mountain with fog",
-                "https://images.unsplash.com/photo-1513147122760-ad1d5bf68cdb?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80"));
-        imageContainer.add(new ProductosViewCard("Mountain at night",
-                "https://images.unsplash.com/photo-1562832135-14a35d25edef?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=815&q=80"));
+    // --- Nuevo método para cargar datos de la BD ---
+    private void cargarProductos() {
+        // 1. Pedimos todos los productos a la BD
+        List<Producto> productos = productoRepository.findAll();
 
+        // 2. Limpiamos el contenedor (por si acaso)
+        imageContainer.removeAll();
+
+        // 3. Creamos una tarjeta por cada producto y la añadimos
+        for (Producto p : productos) {
+            imageContainer.add(new ProductosViewCard(p));
+        }
     }
 
     private void constructUI() {
@@ -57,9 +65,10 @@ public class ProductosView extends Main implements HasComponents, HasStyle {
         container.addClassNames(AlignItems.CENTER, JustifyContent.BETWEEN);
 
         VerticalLayout headerContainer = new VerticalLayout();
-        H2 header = new H2("Beautiful photos");
+        // Cambiamos el título a algo más apropiado
+        H2 header = new H2("Nuestros Productos"); 
         header.addClassNames(Margin.Bottom.NONE, Margin.Top.XLARGE, FontSize.XXXLARGE);
-        Paragraph description = new Paragraph("Royalty free photos and pictures, courtesy of Unsplash");
+        Paragraph description = new Paragraph("Productos cargados desde la nube");
         description.addClassNames(Margin.Bottom.XLARGE, Margin.Top.NONE, TextColor.SECONDARY);
         headerContainer.add(header, description);
 
@@ -73,6 +82,5 @@ public class ProductosView extends Main implements HasComponents, HasStyle {
 
         container.add(headerContainer, sortBy);
         add(container, imageContainer);
-
     }
 }
