@@ -2,3 +2,18 @@
 @import url('./views/tu-food-view.css');
 @import url('./views/pago-view.css');
 @import url('./views/productos-view.css');
+
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+vaadin-vertical-layout[class] {
+    height: 100%;
+}
+
+.login-flip-view {
+    height: 100% !important; 
+}

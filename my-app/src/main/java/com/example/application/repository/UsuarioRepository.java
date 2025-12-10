@@ -6,7 +6,9 @@ import java.util.Optional;
 
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     
+    // Necesario para el login y para verificar si el usuario ya existe en el registro
     Optional<Usuario> findByNombre(String nombre); 
     
-    Optional<Usuario> findByNombreAndContrasena(String nombre, String contrasena);
-}
+    // Opcional: Puede ser útil para validar si el email ya existe
+    Optional<Usuario> findByEmail(String email); 
+}   

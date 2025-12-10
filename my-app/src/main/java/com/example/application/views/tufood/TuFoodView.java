@@ -1,5 +1,6 @@
 package com.example.application.views.tufood;
 
+import com.example.application.views.MainLayout;
 import com.vaadin.flow.component.Composite;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -16,7 +17,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility.Gap;
 import org.vaadin.lineawesome.LineAwesomeIconUrl;
 
 @PageTitle("TuFood")
-@Route("")
+@Route(value = "tufood", layout = MainLayout.class)
 @Menu(order = 0, icon = LineAwesomeIconUrl.PENCIL_RULER_SOLID)
 public class TuFoodView extends Composite<VerticalLayout> {
 
