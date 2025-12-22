@@ -1,62 +1,80 @@
 package com.example.application.views.productos;
 
 import com.example.application.model.Producto;
+import com.example.application.services.ShoppingCartService;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.ListItem;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.theme.lumo.LumoUtility.AlignItems;
-import com.vaadin.flow.theme.lumo.LumoUtility.Background;
-import com.vaadin.flow.theme.lumo.LumoUtility.BorderRadius;
-import com.vaadin.flow.theme.lumo.LumoUtility.Display;
-import com.vaadin.flow.theme.lumo.LumoUtility.FlexDirection;
-import com.vaadin.flow.theme.lumo.LumoUtility.FontSize;
-import com.vaadin.flow.theme.lumo.LumoUtility.FontWeight;
-import com.vaadin.flow.theme.lumo.LumoUtility.JustifyContent;
-import com.vaadin.flow.theme.lumo.LumoUtility.Margin;
-import com.vaadin.flow.theme.lumo.LumoUtility.Overflow;
-import com.vaadin.flow.theme.lumo.LumoUtility.Padding;
-import com.vaadin.flow.theme.lumo.LumoUtility.TextColor;
-import com.vaadin.flow.theme.lumo.LumoUtility.Width;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
+import com.vaadin.flow.theme.lumo.LumoUtility.*;
 
 public class ProductosViewCard extends ListItem {
 
-    // Constructor modificado para aceptar un objeto Producto
-    public ProductosViewCard(Producto producto) {
-        addClassNames(Background.CONTRAST_5, Display.FLEX, FlexDirection.COLUMN, AlignItems.START, Padding.MEDIUM,
-                BorderRadius.LARGE);
+    // Añadimos el servicio como parámetro en el constructor
+    public ProductosViewCard(Producto producto, ShoppingCartService cartService) {
+        // Estilo del contenedor de la tarjeta
+        addClassNames(
+            Background.CONTRAST_5, 
+            Display.FLEX, 
+            FlexDirection.COLUMN, 
+            AlignItems.START, 
+            Padding.MEDIUM,
+            BorderRadius.LARGE
+        );
 
+        // Contenedor de la imagen
         Div div = new Div();
-        div.addClassNames(Background.CONTRAST, Display.FLEX, AlignItems.CENTER, JustifyContent.CENTER,
-                Margin.Bottom.MEDIUM, Overflow.HIDDEN, BorderRadius.MEDIUM, Width.FULL);
+        div.addClassNames(
+            Background.CONTRAST, 
+            Display.FLEX, 
+            AlignItems.CENTER, 
+            JustifyContent.CENTER,
+            Margin.Bottom.MEDIUM, 
+            Overflow.HIDDEN, 
+            BorderRadius.MEDIUM, 
+            Width.FULL
+        );
         div.setHeight("160px");
 
         Image image = new Image();
         image.setWidth("100%");
-        // Como no tienes URL en la BD, usamos una genérica de comida
         image.setSrc("https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80");
         image.setAlt(producto.getNombre());
-
         div.add(image);
 
-        // --- DATOS DINÁMICOS ---
-        Span header = new Span();
+        // Nombre y Precio
+        Span header = new Span(producto.getNombre());
         header.addClassNames(FontSize.XLARGE, FontWeight.SEMIBOLD);
-        header.setText(producto.getNombre()); // <-- DATO REAL
 
-        Span subtitle = new Span();
+        Span subtitle = new Span(String.format("%.2f €", producto.getPrecio()));
         subtitle.addClassNames(FontSize.SMALL, TextColor.SECONDARY);
-        subtitle.setText(String.format("%.2f €", producto.getPrecio())); // <-- DATO REAL
 
-        Paragraph description = new Paragraph(
-                "Aquí puedes poner una descripción más larga si la tuvieras en la BD.");
-        description.addClassName(Margin.Vertical.MEDIUM);
+        Paragraph description = new Paragraph("Producto fresco de alta calidad preparado al momento.");
+        description.addClassNames(Margin.Vertical.MEDIUM, FontSize.SMALL);
 
-        Span badge = new Span();
-        badge.getElement().setAttribute("theme", "badge");
-        badge.setText(producto.getCategoria()); // <-- DATO REAL
+        // --- BOTÓN DE PEDIR (Sustituye al badge estático) ---
+        Button btnPedir = new Button("Pedir", VaadinIcon.PLUS.create());
+        btnPedir.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
+        btnPedir.setWidthFull();
+        btnPedir.getStyle().set("margin-top", "auto"); // Empuja el botón al final de la tarjeta
 
-        add(div, header, subtitle, description, badge);
+        btnPedir.addClickListener(e -> {
+            cartService.addProduct(producto);
+            Notification notification = Notification.show(
+                producto.getNombre() + " añadido al carrito", 
+                3000, 
+                Notification.Position.BOTTOM_END
+            );
+            notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+        });
+
+        // Ensamblaje de la tarjeta
+        add(div, header, subtitle, description, btnPedir);
     }
 }

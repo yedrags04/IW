@@ -18,3 +18,25 @@ vaadin-side-nav-item vaadin-icon {
 [slot="drawer"]:is(header, footer):is(:empty) {
   display: none;
 }
+
+/* --- SOLUCIÓN AL SOLAPAMIENTO --- */
+
+/* Esta regla obliga al área de contenido de TODAS las vistas a bajar */
+vaadin-app-layout::part(content) {
+  padding-top: var(--lumo-size-xl) !important;
+  box-sizing: border-box;
+}
+
+/* Opcional: Asegura que la barra de navegación tenga un fondo sólido y borde */
+vaadin-app-layout [slot="navbar"] {
+  background-color: var(--lumo-base-color);
+  border-bottom: 1px solid var(--lumo-contrast-10pct);
+  min-height: var(--lumo-size-xl);
+}
+
+vaadin-app-layout [slot="navbar"] {
+    position: relative; 
+    z-index: 2;
+    background-color: white; /* O var(--lumo-base-color) */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}

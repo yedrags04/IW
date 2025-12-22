@@ -1,6 +1,5 @@
 package com.example.application.services;
 
-
 import com.example.application.model.Producto;
 import com.vaadin.flow.server.VaadinSession;
 import org.springframework.stereotype.Service;
@@ -20,13 +19,12 @@ public class ShoppingCartService implements Serializable {
 
     /**
      * Obtiene el mapa del carrito de la sesión. Si no existe, crea uno nuevo.
-     * El mapa almacena Producto y su cantidad (Integer).
      */
     @SuppressWarnings("unchecked")
     private Map<Producto, Integer> getCart() {
         Map<Producto, Integer> cart = (Map<Producto, Integer>) VaadinSession.getCurrent().getAttribute(CART_SESSION_KEY);
         if (cart == null) {
-            cart = new LinkedHashMap<>(); // Usamos LinkedHashMap para mantener el orden de inserción
+            cart = new LinkedHashMap<>(); 
             VaadinSession.getCurrent().setAttribute(CART_SESSION_KEY, cart);
         }
         return cart;
@@ -34,11 +32,26 @@ public class ShoppingCartService implements Serializable {
 
     /**
      * Añade un producto al carrito o incrementa su cantidad.
-     * @param producto Producto a añadir.
      */
     public void addProduct(Producto producto) {
         Map<Producto, Integer> cart = getCart();
         cart.merge(producto, 1, Integer::sum);
+    }
+
+    /**
+     * --- NUEVO MÉTODO ---
+     * Reduce la cantidad de un producto o lo elimina si solo queda uno.
+     */
+    public void removeProduct(Producto producto) {
+        Map<Producto, Integer> cart = getCart();
+        if (cart.containsKey(producto)) {
+            int cantidad = cart.get(producto);
+            if (cantidad > 1) {
+                cart.put(producto, cantidad - 1);
+            } else {
+                cart.remove(producto);
+            }
+        }
     }
 
     /**

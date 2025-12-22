@@ -4,16 +4,16 @@ import com.example.application.views.MainLayout;
 import com.vaadin.flow.component.Composite;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.html.H1;
-import com.vaadin.flow.component.html.H5;
-import com.vaadin.flow.component.html.H6;
+import com.vaadin.flow.component.html.*;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.theme.lumo.LumoUtility.Gap;
+import com.vaadin.flow.theme.lumo.LumoUtility;
 import org.vaadin.lineawesome.LineAwesomeIconUrl;
 
 @PageTitle("TuFood")
@@ -22,102 +22,74 @@ import org.vaadin.lineawesome.LineAwesomeIconUrl;
 public class TuFoodView extends Composite<VerticalLayout> {
 
     public TuFoodView() {
-        HorizontalLayout layoutRow = new HorizontalLayout();
-        HorizontalLayout layoutRow2 = new HorizontalLayout();
-        H1 h1 = new H1();
-        H5 h5 = new H5();
-        H5 h52 = new H5();
-        H5 h53 = new H5();
-        H5 h54 = new H5();
-        Button buttonPrimary = new Button();
-        HorizontalLayout layoutRow3 = new HorizontalLayout();
-        VerticalLayout layoutColumn3 = new VerticalLayout();
-        VerticalLayout layoutColumn2 = new VerticalLayout();
-        HorizontalLayout layoutRow4 = new HorizontalLayout();
-        TextField textField = new TextField();
-        TextField textField2 = new TextField();
-        TextField textField3 = new TextField();
-        TextField textField4 = new TextField();
-        VerticalLayout layoutColumn4 = new VerticalLayout();
-        HorizontalLayout layoutRow5 = new HorizontalLayout();
-        HorizontalLayout layoutRow6 = new HorizontalLayout();
-        H6 h6 = new H6();
-        H6 h62 = new H6();
-        getContent().setWidth("100%");
-        getContent().getStyle().set("flex-grow", "1");
-        layoutRow.addClassName(Gap.MEDIUM);
-        layoutRow.setWidth("100%");
-        layoutRow.setHeight("min-content");
-        layoutRow2.setHeightFull();
-        layoutRow.setFlexGrow(1.0, layoutRow2);
-        layoutRow2.addClassName(Gap.MEDIUM);
-        layoutRow2.setWidth("100%");
-        layoutRow2.getStyle().set("flex-grow", "1");
-        h1.setText("Heading");
-        h1.setWidth("max-content");
-        h5.setText("Heading");
-        h5.setWidth("max-content");
-        h52.setText("Heading");
-        h52.setWidth("max-content");
-        h53.setText("Heading");
-        h53.setWidth("max-content");
-        h54.setText("Heading");
-        h54.setWidth("max-content");
-        buttonPrimary.setText("Button");
-        buttonPrimary.setWidth("min-content");
-        buttonPrimary.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        layoutRow3.addClassName(Gap.MEDIUM);
-        layoutRow3.setWidth("100%");
-        layoutRow3.getStyle().set("flex-grow", "1");
-        layoutColumn3.getStyle().set("flex-grow", "1");
-        layoutColumn2.setWidth("100%");
-        layoutColumn2.getStyle().set("flex-grow", "1");
-        layoutRow4.setWidthFull();
-        layoutColumn2.setFlexGrow(1.0, layoutRow4);
-        layoutRow4.addClassName(Gap.MEDIUM);
-        layoutRow4.setWidth("100%");
-        layoutRow4.getStyle().set("flex-grow", "1");
-        textField.setLabel("Text field");
-        textField.setWidth("min-content");
-        textField2.setLabel("Text field");
-        textField2.setWidth("min-content");
-        textField3.setLabel("Text field");
-        textField3.setWidth("min-content");
-        textField4.setLabel("Text field");
-        textField4.setWidth("min-content");
-        layoutColumn4.getStyle().set("flex-grow", "1");
-        layoutRow5.addClassName(Gap.MEDIUM);
-        layoutRow5.setWidth("100%");
-        layoutRow5.setHeight("min-content");
-        layoutRow6.setHeightFull();
-        layoutRow5.setFlexGrow(1.0, layoutRow6);
-        layoutRow6.addClassName(Gap.MEDIUM);
-        layoutRow6.setWidth("100%");
-        layoutRow6.getStyle().set("flex-grow", "1");
-        h6.setText("Heading");
-        h6.setWidth("max-content");
-        h62.setText("Heading");
-        h62.setWidth("max-content");
-        getContent().add(layoutRow);
-        layoutRow.add(layoutRow2);
-        layoutRow2.add(h1);
-        layoutRow2.add(h5);
-        layoutRow2.add(h52);
-        layoutRow2.add(h53);
-        layoutRow2.add(h54);
-        layoutRow.add(buttonPrimary);
-        getContent().add(layoutRow3);
-        layoutRow3.add(layoutColumn3);
-        layoutRow3.add(layoutColumn2);
-        layoutColumn2.add(layoutRow4);
-        layoutRow4.add(textField);
-        layoutRow4.add(textField2);
-        layoutRow4.add(textField3);
-        layoutRow4.add(textField4);
-        layoutRow3.add(layoutColumn4);
-        getContent().add(layoutRow5);
-        layoutRow5.add(layoutRow6);
-        layoutRow6.add(h6);
-        layoutRow6.add(h62);
+        VerticalLayout root = getContent();
+        root.getStyle().set("margin-top", "var(--lumo-size-xl)");
+        
+        // --- DISEÑO DE PANEL CENTRADO ---
+        root.setWidthFull();
+        root.setMaxWidth("850px"); // Ancho ideal para lectura
+        root.addClassNames(LumoUtility.Margin.Horizontal.AUTO);
+        
+        root.getStyle()
+            .set("background-color", "white")
+            .set("padding", "2.5rem")
+            .set("border-radius", "16px")
+            .set("box-shadow", "0 4px 20px rgba(0,0,0,0.08)");
+
+        // --- 1. CABECERA ---
+        HorizontalLayout header = new HorizontalLayout();
+        header.setWidthFull();
+        header.setAlignItems(FlexComponent.Alignment.CENTER);
+        header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+
+        H1 title = new H1("Gestión de Alimentos");
+        title.getStyle().set("font-size", "1.8rem").set("margin", "0");
+        
+        Button btnAction = new Button("Nueva Orden", VaadinIcon.PLUS.create());
+        btnAction.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        header.add(title, btnAction);
+
+        // --- 2. BARRA DE ESTADÍSTICAS ---
+        HorizontalLayout infoBar = new HorizontalLayout();
+        infoBar.setWidthFull();
+        infoBar.getStyle().set("gap", "3rem").set("margin-top", "1.5rem");
+        infoBar.add(createStat("Pendientes", "12"), createStat("Entregados", "45"), createStat("Total", "57"));
+
+        // --- 3. FORMULARIO ---
+        H3 formTitle = new H3("Detalles del Pedido");
+        formTitle.getStyle().set("margin-top", "2rem");
+
+        HorizontalLayout formRow = new HorizontalLayout();
+        formRow.setWidthFull();
+        formRow.getStyle().set("flex-wrap", "wrap"); 
+
+        TextField productName = new TextField("Producto");
+        productName.setPrefixComponent(VaadinIcon.PACKAGE.create());
+        productName.setPlaceholder("Ej. Pizza Margarita");
+        productName.setMinWidth("300px");
+        
+        TextField tableNumber = new TextField("Mesa");
+        tableNumber.setPlaceholder("Nº");
+        tableNumber.setWidth("100px");
+
+        formRow.add(productName, tableNumber);
+        formRow.setFlexGrow(1.0, productName);
+
+        root.add(header, new Hr(), infoBar, formTitle, formRow);
+    }
+
+    private VerticalLayout createStat(String label, String value) {
+        VerticalLayout v = new VerticalLayout();
+        v.setPadding(false); v.setSpacing(false); 
+        v.setWidth("min-content");
+        
+        Span sLabel = new Span(label);
+        sLabel.addClassNames(LumoUtility.FontSize.SMALL, LumoUtility.TextColor.SECONDARY, LumoUtility.FontWeight.BOLD);
+        
+        Span sValue = new Span(value);
+        sValue.getStyle().set("font-size", "1.5rem").set("font-weight", "800");
+        
+        v.add(sLabel, sValue);
+        return v;
     }
 }

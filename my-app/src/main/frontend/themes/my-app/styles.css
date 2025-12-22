@@ -3,17 +3,13 @@
 @import url('./views/pago-view.css');
 @import url('./views/productos-view.css');
 
-
 html, body {
     height: 100%;
     margin: 0;
     padding: 0;
 }
 
-vaadin-vertical-layout[class] {
-    height: 100%;
-}
-
+/* Solo reglas para el login */
 .login-flip-view {
     height: 100% !important; 
 }
