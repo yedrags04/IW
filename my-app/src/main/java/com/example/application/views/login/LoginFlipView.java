@@ -142,8 +142,7 @@ public class LoginFlipView extends VerticalLayout {
         Span loginWith = new Span("Or Connect with");
         loginWith.addClassName("loginwith");
 
-        Html socialIcons = new Html("<div>" + SVG_SOCIAL_FB + SVG_SOCIAL_TWITTER + SVG_SOCIAL_GITHUB + SVG_SOCIAL_LINKEDIN + "</div>");        
-        Span copy = new Span("© 2025"); 
+Html socialIcons = new Html("<div class='social-icons'>" + SVG_SOCIAL_FB + SVG_SOCIAL_TWITTER + SVG_SOCIAL_GITHUB + SVG_SOCIAL_LINKEDIN + "</div>");        Span copy = new Span("© 2025"); 
         copy.addClassName("copy");
 
         content.add(title, form, loginWith, socialIcons, copy);

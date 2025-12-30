@@ -1,14 +1,58 @@
+/* Contenedor principal (VerticalLayout de Vaadin) */
 .pago-view {
-  display: block;
-  margin: 0 auto;
-  max-width: 1024px;
-  padding: 0 var(--lumo-space-l);
+    background-color: #f0f2f5 !important; /* Un gris un poco más oscuro de fondo */
+    padding: 2rem;
 }
-.pago-view .button-layout {
-  margin-bottom: var(--lumo-space-l);
-  margin-top: var(--lumo-space-m);
+
+.pago-card {
+    background: white;
+    padding: 3rem !important; /* Más espacio interno */
+    border-radius: 28px !important;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.1) !important;
+    max-width: 600px;
+    width: 95%;
 }
+
+/* Títulos más grandes y elegantes */
 .pago-view h3 {
-  margin-bottom: var(--lumo-space-s);
-  margin-top: var(--lumo-space-l);
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    color: #1a1a1a;
+}
+
+/* Estilo para que los inputs resalten */
+vaadin-text-field, vaadin-password-field, vaadin-select {
+    --vaadin-field-default-background: #f8f9fa;
+}
+
+/* Evitar que Caducidad y CSC se peguen */
+.expiration-date-field {
+    width: 100%;
+}
+
+.expiration-date-field vaadin-horizontal-layout {
+    width: 100%;
+    gap: 12px;
+}
+
+/* Ajuste para que el Mes y Año no se amontonen */
+.expiration-date-field vaadin-horizontal-layout {
+    width: 100%;
+    gap: var(--lumo-space-m);
+}
+
+/* Hacer los títulos más elegantes */
+.pago-view h3 {
+    color: var(--lumo-header-text-color);
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Espaciado entre bloques del formulario */
+vaadin-form-layout {
+    margin-bottom: 1rem;
 }
