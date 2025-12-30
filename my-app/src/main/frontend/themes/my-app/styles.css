@@ -2,14 +2,46 @@
 @import url('./views/tu-food-view.css');
 @import url('./views/pago-view.css');
 @import url('./views/productos-view.css');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
 
-html, body {
+body {
     height: 100%;
     margin: 0;
     padding: 0;
 }
 
+html {
+    /* 2. Aplicarla al sistema Lumo */
+    --lumo-font-family: 'Poppins', sans-serif;
+    
+    /* Opcional: Ajustar el grosor base para que se vea más legible */
+    --lumo-body-text-color: #2d2d2d;
+  /* Color principal de la marca */
+  --lumo-primary-color: #FF4D00;
+  --lumo-primary-text-color: #FF4D00;
+  
+  /* Ajustar el color de selección y foco */
+  --lumo-primary-color-50pct: rgba(255, 77, 0, 0.5);
+  --lumo-primary-color-10pct: rgba(255, 77, 0, 0.1);
+
+  /* Bordes y redondeado para un look más "foodie" (más circular) */
+  --lumo-border-radius-m: 12px;
+  /* Aumenta el tamaño de fuente base (por defecto es 1rem) */
+  
+}
+
+/* Estilo opcional para el Header de tu MainLayout */
+header {
+    background-color: white;
+    border-bottom: 1px solid var(--lumo-contrast-10pct);
+}
+
 /* Solo reglas para el login */
 .login-flip-view {
     height: 100% !important; 
+}
+
+h1, h2, h3, h4, h5 {
+    font-weight: 700;
+    color: var(--lumo-header-text-color);
 }
