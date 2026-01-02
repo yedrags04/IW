@@ -136,6 +136,7 @@ h1, h2, h3, h4, h5 {
     z-index: 100;
     background: linear-gradient(to right, #FF4B2B, #FF416C);
     color: #FFFFFF;
+    -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
 }
 
@@ -152,17 +153,18 @@ h1, h2, h3, h4, h5 {
 
 /* --- FIX PARA EL BOTÓN DE REGISTRO (En la parte naranja) --- */
 #register, #login {
+    display: inline-block !important;
+    visibility: visible !important;
     background-color: transparent !important;
-    border: 2px solid #FFFFFF !important; /* Borde blanco fuerte */
-    color: #FFFFFF !important; /* Texto blanco puro */
+    border: 2px solid #FFFFFF !important;
+    color: #FFFFFF !important;
     border-radius: 30px;
-    padding: 10px 40px;
+    padding: 12px 45px;
     font-size: 1rem;
-    font-weight: 800;
-    text-transform: uppercase;
+    font-weight: 700;
+    margin-top: 25px; /* Espacio superior */
     cursor: pointer;
-    margin-top: 20px;
-    opacity: 1 !important; /* Aseguramos que no sea transparente */
+    z-index: 110;
 }
 
 #register:hover, #login:hover {
@@ -176,6 +178,11 @@ h1, h2, h3, h4, h5 {
     font-weight: 800;
 }
 
+/* --- FORMULARIO REGISTRO (Java VerticalLayout) --- */
+.register vaadin-button[theme~="primary"] {
+    margin-top: 40px !important; /* EMPUJA EL BOTÓN 'CREAR CUENTA' HACIA ABAJO */
+}
+
 /* Separar los iconos sociales del botón de entrar */
 .social-icons {
     margin-top: 20px;
@@ -183,11 +190,15 @@ h1, h2, h3, h4, h5 {
 
 /* Corregir el texto al revés: El panel back debe estar pre-girado */
 .page.back {
-    transform: translateX(-100%) rotateY(-180deg);
+    transform: rotateY(-180deg);
+}
+
+#container.active .page {
+    transform: translateX(-100%);
 }
 
 #container.active .page.front {
-    transform: translateX(100%) rotateY(180deg);
+    z-index: 1;
     opacity: 0;
 }
 
