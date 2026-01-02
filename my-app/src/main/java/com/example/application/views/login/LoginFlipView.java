@@ -141,6 +141,7 @@ public class LoginFlipView extends VerticalLayout {
         registerPanel.addClassName("register");
         
         VerticalLayout content = new VerticalLayout();
+        content.getStyle().set("background", "transparent");
         content.setHeightFull();
         content.setJustifyContentMode(JustifyContentMode.CENTER); 
         content.setAlignItems(Alignment.CENTER);

@@ -190,7 +190,8 @@ h1, h2, h3, h4, h5 {
 
 /* Corregir el texto al revés: El panel back debe estar pre-girado */
 .page.back {
-    transform: rotateY(-180deg);
+    opacity: 0;
+    pointer-events: none;
 }
 
 #container.active .page {
@@ -198,14 +199,15 @@ h1, h2, h3, h4, h5 {
 }
 
 #container.active .page.front {
-    z-index: 1;
     opacity: 0;
+    z-index: 1;
 }
 
 #container.active .page.back {
-    transform: translateX(0) rotateY(0deg);
     opacity: 1;
-    z-index: 101;
+    pointer-events: all;
+    /* Esto asegura que se mueva a la izquierda junto con el padre .page */
+    transform: rotateY(0deg);
 }
 
 /* --- ICONOS SOCIALES --- */
@@ -235,6 +237,12 @@ h1, h2, h3, h4, h5 {
 
 /* --- ANIMACIÓN DEL FLIP --- */
 #container.active .login { transform: translateX(100%); opacity: 0; }
-#container.active .register { transform: translateX(100%); opacity: 1; z-index: 5; }
+
+#container.active .register { 
+    transform: translateX(100%); 
+    opacity: 1; 
+    z-index: 5; 
+}
+
 #container.active .page { transform: translateX(-100%); }
 
