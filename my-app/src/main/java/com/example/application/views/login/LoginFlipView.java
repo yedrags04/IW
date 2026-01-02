@@ -17,6 +17,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 
@@ -58,6 +59,19 @@ public class LoginFlipView extends VerticalLayout {
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.CENTER);
 
+            HorizontalLayout topBar = new HorizontalLayout();
+    topBar.setWidthFull();
+    topBar.setJustifyContentMode(JustifyContentMode.END); // alinea a la derecha
+    topBar.getStyle().set("padding", "1rem"); // espacio desde el borde
+    // Icono de persona
+    Button personIcon = new Button();
+    personIcon.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);
+    personIcon.setIcon(VaadinIcon.USER.create());
+    personIcon.getElement().getStyle().set("font-size", "1.5rem"); // tamaño del icono
+    personIcon.addClickListener(e -> Notification.show("Icono persona clicado"));
+    topBar.add(personIcon);
+
+    add(topBar); // se añade al layout principal
         container = new Div(); 
         container.setId("container"); 
 
@@ -136,62 +150,74 @@ public class LoginFlipView extends VerticalLayout {
         return pageBack;
     }
     
-    private Div createRegisterPanel() {
-        Div registerPanel = new Div();
-        registerPanel.addClassName("register");
-        
-        VerticalLayout content = new VerticalLayout();
-        content.setHeightFull();
-        content.setJustifyContentMode(JustifyContentMode.CENTER); 
-        content.setAlignItems(Alignment.CENTER);
-        content.setSpacing(true);
+private Div createRegisterPanel() {
+    Div registerPanel = new Div();
+    registerPanel.addClassName("register");
+    
+    VerticalLayout content = new VerticalLayout();
+    content.setHeightFull();
+    content.setJustifyContentMode(JustifyContentMode.CENTER); 
+    content.setAlignItems(Alignment.CENTER);
+    content.setSpacing(true);
 
-        H1 title = new H1("Sign Up");
+    H1 title = new H1("Sign Up");
 
-        TextField name = new TextField("Nombre");
-        name.setPrefixComponent(VaadinIcon.USER.create());
-        name.setWidthFull();
-        TextField email = new TextField("Email");
-        email.setPrefixComponent(VaadinIcon.ENVELOPE.create());
-        email.setWidthFull();
-        PasswordField password = new PasswordField("Contraseña");
-        password.setPrefixComponent(VaadinIcon.LOCK.create());
-        password.setWidthFull();
+    TextField name = new TextField("Nombre");
+    name.setPrefixComponent(VaadinIcon.USER.create());
+    name.setWidthFull();
+    TextField email = new TextField("Email");
+    email.setPrefixComponent(VaadinIcon.ENVELOPE.create());
+    email.setWidthFull();
+    PasswordField password = new PasswordField("Contraseña");
+    password.setPrefixComponent(VaadinIcon.LOCK.create());
+    password.setWidthFull();
 
-        Div feedbackLabel = new Div();
-        feedbackLabel.getStyle().set("font-size", "0.8rem").set("margin", "5px 0");
-        feedbackLabel.setVisible(false);
+    Div feedbackLabel = new Div();
+    feedbackLabel.getStyle().set("font-size", "0.8rem").set("margin", "5px 0");
+    feedbackLabel.setVisible(false);
 
-        Button signUpBtn = new Button("Crear Cuenta");
-        signUpBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
-        signUpBtn.setWidthFull();
-        signUpBtn.getStyle().set("margin-top", "2.5rem"); 
+    Button signUpBtn = new Button("Crear Cuenta");
+    signUpBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
+    signUpBtn.setWidthFull();
+    signUpBtn.getStyle().set("margin-top", "2.5rem"); 
 
-        Binder<RegistrationForm> binder = new Binder<>(RegistrationForm.class);
+    // NUEVO BOTÓN VOLVER AL LOGIN
+    Button backToLoginBtn = new Button("Volver al Login");
+    backToLoginBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+    backToLoginBtn.setWidthFull();
+    backToLoginBtn.getStyle().set("margin-top", "1rem");
 
-        signUpBtn.addClickListener(event -> {
-            RegistrationForm formBean = new RegistrationForm();
-            try {
-                binder.writeBean(formBean);
-                String result = authService.register(name.getValue(), email.getValue(), password.getValue());
-                if ("SUCCESS".equals(result)) {
-                    Notification.show("¡Éxito! Inicie sesión.");
-                    container.removeClassName("active"); // Usa la variable de clase corregida
-                    binder.readBean(new RegistrationForm()); 
-                } else {
-                    feedbackLabel.setText(result);
-                    feedbackLabel.getStyle().set("color", "red");
-                    feedbackLabel.setVisible(true);
-                }
-            } catch (ValidationException e) {
-                feedbackLabel.setText("Revisa los errores.");
+    backToLoginBtn.addClickListener(e -> {
+        // Quita la clase "active" del contenedor para volver al login
+        container.removeClassName("active");
+    });
+
+    Binder<RegistrationForm> binder = new Binder<>(RegistrationForm.class);
+
+    signUpBtn.addClickListener(event -> {
+        RegistrationForm formBean = new RegistrationForm();
+        try {
+            binder.writeBean(formBean);
+            String result = authService.register(name.getValue(), email.getValue(), password.getValue());
+            if ("SUCCESS".equals(result)) {
+                Notification.show("¡Éxito! Inicie sesión.");
+                container.removeClassName("active"); 
+                binder.readBean(new RegistrationForm()); 
+            } else {
+                feedbackLabel.setText(result);
+                feedbackLabel.getStyle().set("color", "red");
                 feedbackLabel.setVisible(true);
             }
-        });
+        } catch (ValidationException e) {
+            feedbackLabel.setText("Revisa los errores.");
+            feedbackLabel.setVisible(true);
+        }
+    });
 
-        Html socialIcons = new Html("<div class='social-icons'>" + SVG_SOCIAL_FB + SVG_SOCIAL_TWITTER + SVG_SOCIAL_GITHUB + SVG_SOCIAL_LINKEDIN + "</div>");
-        content.add(title, name, email, password, signUpBtn, socialIcons);
-        registerPanel.add(content);
-        return registerPanel;
-    }
+    Html socialIcons = new Html("<div class='social-icons'>" + SVG_SOCIAL_FB + SVG_SOCIAL_TWITTER + SVG_SOCIAL_GITHUB + SVG_SOCIAL_LINKEDIN + "</div>");
+    content.add(title, name, email, password, signUpBtn, backToLoginBtn, feedbackLabel, socialIcons);
+    registerPanel.add(content);
+    return registerPanel;
+}
+
 }

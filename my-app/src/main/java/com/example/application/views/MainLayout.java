@@ -1,5 +1,8 @@
 package com.example.application.views;
 
+
+import com.vaadin.flow.component.notification.Notification;
+
 import com.example.application.security.AuthService;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
@@ -42,44 +45,53 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
     }
 
     private void addHeaderContent() {
-        DrawerToggle toggle = new DrawerToggle();
-        toggle.setAriaLabel("Menu toggle");
+    DrawerToggle toggle = new DrawerToggle();
+    toggle.setAriaLabel("Menu toggle");
 
-        viewTitle = new H1();
-        viewTitle.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.Margin.NONE);
+    viewTitle = new H1();
+    viewTitle.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.Margin.NONE);
 
-        // --- BOTONES DE ACCIÓN (DERECHA) ---
-        
-        // Botón para ir al Carrito
-        Button cartBtn = new Button(VaadinIcon.CART.create());
-        cartBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        cartBtn.addClickListener(e -> UI.getCurrent().navigate("carrito"));
-        cartBtn.getElement().setAttribute("title", "Ver carrito");
+    // --- BOTONES DE ACCIÓN (DERECHA) ---
+    
+    // Botón para ir al Carrito
+    Button cartBtn = new Button(VaadinIcon.CART.create());
+    cartBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+    cartBtn.addClickListener(e -> UI.getCurrent().navigate("carrito"));
+    cartBtn.getElement().setAttribute("title", "Ver carrito");
 
-        // Botón para Cerrar Sesión
-        Button logoutBtn = new Button("Cerrar Sesión", VaadinIcon.SIGN_OUT.create());
-        logoutBtn.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
-        logoutBtn.addClickListener(e -> {
-            authService.logout();
-            UI.getCurrent().navigate(""); // Redirige a la raíz (Login)
-        });
+    // Botón para el Icono de Persona
+    Button personBtn = new Button();
+    personBtn.setIcon(VaadinIcon.USER.create());
+    personBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);
+    personBtn.getElement().getStyle().set("font-size", "1.5rem"); // tamaño icono
+    personBtn.addClickListener(e -> Notification.show("Icono de persona clicado"));
+    personBtn.getElement().setAttribute("title", "Perfil");
 
-        // Contenedor alineado a la derecha
-        HorizontalLayout actionLayout = new HorizontalLayout(cartBtn, logoutBtn);
-        actionLayout.addClassNames(LumoUtility.Margin.Left.AUTO);
-        actionLayout.setAlignItems(FlexComponent.Alignment.CENTER);
-        actionLayout.setSpacing(true);
+    // Botón para Cerrar Sesión
+    Button logoutBtn = new Button("Cerrar Sesión", VaadinIcon.SIGN_OUT.create());
+    logoutBtn.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
+    logoutBtn.addClickListener(e -> {
+        authService.logout();
+        UI.getCurrent().navigate(""); // Redirige a la raíz (Login)
+    });
 
-        Header header = new Header(toggle, viewTitle, actionLayout);
-        header.addClassNames(
-            LumoUtility.Display.FLEX, 
-            LumoUtility.AlignItems.CENTER, 
-            LumoUtility.Padding.Horizontal.MEDIUM
-        );
-        header.setWidthFull();
+    // Contenedor alineado a la derecha
+    HorizontalLayout actionLayout = new HorizontalLayout(cartBtn, personBtn, logoutBtn);
+    actionLayout.addClassNames(LumoUtility.Margin.Left.AUTO);
+    actionLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+    actionLayout.setSpacing(true);
 
-        addToNavbar(true, header);
-    }
+    Header header = new Header(toggle, viewTitle, actionLayout);
+    header.addClassNames(
+        LumoUtility.Display.FLEX, 
+        LumoUtility.AlignItems.CENTER, 
+        LumoUtility.Padding.Horizontal.MEDIUM
+    );
+    header.setWidthFull();
+
+    addToNavbar(true, header);
+}
+
 
     private void addDrawerContent() {
         Span appName = new Span("TuFood App");
