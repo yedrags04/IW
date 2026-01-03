@@ -74,28 +74,30 @@ h1, h2, h3, h4, h5 {
     top: 0;
     height: 100%;
     width: 50%;
-    padding: 50px; /* Aumentamos el padding para que no esté pegado */
+    padding: 50px;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    justify-content: center; /* ESTO CENTRA VERTICALMENTE */
+    justify-content: center;
     align-items: center;
-    transition: transform 0.6s ease-in-out, opacity 0.6s ease-in-out, z-index 0.6s;
+    transition: all 0.6s ease-in-out; 
     gap: 15px;
 }
 
 /* El Login empieza a la izquierda */
 .login {
     left: 0;
-    z-index: 5;
+    z-index: 2;
     opacity: 1;
+    transform: translateX(0);
 }
 
 /* El Registro empieza "escondido" detrás del Login */
 .register {
     left: 0;
-    opacity: 0;
     z-index: 1;
+    opacity: 0;
+    transform: translateX(0);
 }
 
 /* --- ANIMACIÓN CUANDO ESTÁ ACTIVO (SIGNUP) --- */
@@ -126,7 +128,6 @@ h1, h2, h3, h4, h5 {
     top: 0;
     left: 50%;
     width: 50%;
-    height: 100%;
     overflow: hidden;
     transition: transform 0.6s ease-in-out;
     z-index: 100;
@@ -188,6 +189,10 @@ h1, h2, h3, h4, h5 {
     top: 0;
     width: 100%;
     height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     transition: opacity 0.6s ease-in-out;
 }
 
@@ -241,7 +246,11 @@ h1, h2, h3, h4, h5 {
 }
 
 /* --- ANIMACIÓN DEL FLIP --- */
-#container.active .login { transform: translateX(100%); opacity: 0; }
+#container.active .login { 
+    transform: translateX(100%); 
+    opacity: 0; 
+    z-index: 1;
+}
 
 #container.active .register { 
     transform: translateX(100%); 
