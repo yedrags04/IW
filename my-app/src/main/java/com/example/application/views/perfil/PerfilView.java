@@ -1,5 +1,7 @@
-package com.example.application.views.perfil; // Asegúrate de que coincida con tu estructura de carpetas
+package com.example.application.views.perfil;
 
+import com.example.application.model.Usuario;
+import com.example.application.repository.UsuarioRepository;
 import com.example.application.views.MainLayout;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
@@ -11,18 +13,52 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
+import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
+import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.VaadinSession;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @PageTitle("Mi Perfil | Tu Food")
 @Route(value = "perfil", layout = MainLayout.class)
 public class PerfilView extends VerticalLayout {
+    
+    private final UsuarioRepository usuarioRepository;
+    private Usuario usuarioActual;
+    private TextField nombre;
+    private TextField apellidos;
+    private EmailField email;
+    private TextField restaurante;
+    private TextField rol;
 
-    public PerfilView() {
+    @Autowired
+    public PerfilView(UsuarioRepository usuarioRepository) {
+        this.usuarioRepository = usuarioRepository;
+        
+        // Obtener el usuario logueado de la sesión
+        String nombreUsuario = (String) VaadinSession.getCurrent().getAttribute("userName");
+        if (nombreUsuario == null) {
+            mostrarError("Debes estar logueado para acceder al perfil");
+            return;
+        }
+        
+        // Cargar usuario de la base de datos
+        var usuarioOpt = usuarioRepository.findByNombre(nombreUsuario);
+        if (usuarioOpt.isEmpty()) {
+            mostrarError("Usuario no encontrado en la base de datos");
+            return;
+        }
+        
+        this.usuarioActual = usuarioOpt.get();
+        construirVista();
+    }
+    
+    private void construirVista() {
         // 1. Configuración del contenedor principal de la vista
         addClassName("perfil-view");
         setSizeFull();
@@ -34,7 +70,7 @@ public class PerfilView extends VerticalLayout {
         card.addClassNames("perfil-card", "perfil-card-content"); 
         card.setWidthFull();
         card.setMaxWidth("800px"); 
-        card.setPadding(false); // El padding se maneja vía CSS (.perfil-card-content)
+        card.setPadding(false);
         card.setSpacing(false);
 
         // --- ENCABEZADO (Avatar y Título) ---
@@ -46,25 +82,25 @@ public class PerfilView extends VerticalLayout {
         formLayout.addClassName("perfil-form");
         formLayout.setWidthFull();
 
-        TextField nombre = new TextField("Nombre");
+        nombre = new TextField("Nombre");
         nombre.setPrefixComponent(new Icon(VaadinIcon.USER));
-        nombre.setValue("Juan");
+        nombre.setValue(usuarioActual.getNombre());
 
-        TextField apellidos = new TextField("Apellidos");
-        apellidos.setValue("Pérez");
+        apellidos = new TextField("Apellidos");
+        apellidos.setValue(""); // De momento sin campo de apellido en BD
 
-        EmailField email = new EmailField("Correo Electrónico");
+        email = new EmailField("Correo Electrónico");
         email.setPrefixComponent(new Icon(VaadinIcon.ENVELOPE));
-        email.setValue("juan.perez@tufood.com");
+        email.setValue(usuarioActual.getEmail());
 
-        TextField restaurante = new TextField("Restaurante");
+        restaurante = new TextField("Restaurante");
         restaurante.setPrefixComponent(new Icon(VaadinIcon.SHOP));
-        restaurante.setValue("La Parri-Burger");
+        restaurante.setValue(""); // Campo futuro
 
-        // Campo Admin (Solo lectura)
-        TextField rol = new TextField("Rol de Usuario");
+        // Campo Rol (Solo lectura)
+        rol = new TextField("Rol de Usuario");
         rol.setPrefixComponent(new Icon(VaadinIcon.SHIELD));
-        rol.setValue("Administrador del Sistema");
+        rol.setValue(usuarioActual.getRol());
         rol.setReadOnly(true);
         rol.addClassName("readonly-field");
 
@@ -75,7 +111,7 @@ public class PerfilView extends VerticalLayout {
                 new FormLayout.ResponsiveStep("600px", 2)
         );
 
-        // Configuración de columnas (Email, Restaurante y Rol ocupan toda la fila)
+        // Configuración de columnas
         formLayout.setColspan(email, 2);
         formLayout.setColspan(restaurante, 2);
         formLayout.setColspan(rol, 2);
@@ -84,14 +120,12 @@ public class PerfilView extends VerticalLayout {
         Button guardar = new Button("Guardar Cambios", new Icon(VaadinIcon.CHECK));
         guardar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         guardar.addClassName("btn-primary");
-        guardar.addClickListener(e -> {
-            Notification n = Notification.show("¡Perfil actualizado!");
-            n.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-        });
+        guardar.addClickListener(e -> guardarCambios());
 
         Button cancelar = new Button("Cancelar");
         cancelar.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         cancelar.addClassName("btn-tertiary");
+        cancelar.addClickListener(e -> recargarDatos());
 
         HorizontalLayout actions = new HorizontalLayout(guardar, cancelar);
         actions.addClassName("perfil-actions");
@@ -106,13 +140,66 @@ public class PerfilView extends VerticalLayout {
         add(card);
     }
 
+    private void guardarCambios() {
+        try {
+            // Validaciones básicas
+            if (nombre.getValue().trim().isEmpty()) {
+                mostrarError("El nombre no puede estar vacío");
+                return;
+            }
+            if (!email.getValue().contains("@")) {
+                mostrarError("Email inválido");
+                return;
+            }
+            
+            // Actualizar datos del usuario
+            usuarioActual.setNombre(nombre.getValue().trim());
+            usuarioActual.setEmail(email.getValue().trim());
+            
+            // Guardar en BD
+            usuarioRepository.save(usuarioActual);
+            
+            // Actualizar sesión con el nuevo nombre si cambió
+            VaadinSession.getCurrent().setAttribute("userName", usuarioActual.getNombre());
+            
+            mostrarExito("Perfil actualizado correctamente");
+        } catch (Exception ex) {
+            mostrarError("Error al guardar: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+    }
+    
+    private void recargarDatos() {
+        nombre.setValue(usuarioActual.getNombre());
+        email.setValue(usuarioActual.getEmail());
+        apellidos.clear();
+        restaurante.clear();
+        mostrarInfo("Cambios cancelados");
+    }
+    
+    private void mostrarExito(String mensaje) {
+        Notification n = Notification.show(mensaje);
+        n.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+    }
+    
+    private void mostrarError(String mensaje) {
+        Notification n = Notification.show("❌ " + mensaje);
+        n.addThemeVariants(NotificationVariant.LUMO_ERROR);
+    }
+    
+    private void mostrarInfo(String mensaje) {
+        Notification.show("ℹ️ " + mensaje);
+    }
+
     private HorizontalLayout createHeader() {
         HorizontalLayout header = new HorizontalLayout();
         header.setWidthFull();
         header.setAlignItems(Alignment.CENTER);
         header.setSpacing(true);
 
-        Avatar avatar = new Avatar("Juan Pérez");
+        // Avatar con las iniciales del usuario
+        String iniciales = usuarioActual.getNombre().substring(0, 1).toUpperCase();
+        Avatar avatar = new Avatar(usuarioActual.getNombre());
         avatar.setWidth("80px");
         avatar.setHeight("80px");
         avatar.getStyle().set("border", "2px solid var(--lumo-primary-color-10pct)");
@@ -125,7 +212,7 @@ public class PerfilView extends VerticalLayout {
         title.getStyle().set("margin", "0");
         title.getStyle().set("font-size", "1.5rem");
         
-        Paragraph subtitle = new Paragraph("Gestiona tu información personal y del restaurante");
+        Paragraph subtitle = new Paragraph("Usuario: " + usuarioActual.getNombre());
         subtitle.getStyle().set("color", "var(--lumo-secondary-text-color)");
         subtitle.getStyle().set("margin", "0");
 
