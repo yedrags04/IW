@@ -260,3 +260,140 @@ h1, h2, h3, h4, h5 {
 
 #container.active .page { transform: translateX(-100%); }
 
+
+
+/* =========================================
+   ESTILOS PARA LA VISTA DE PERFIL
+   ========================================= */
+
+/* 1. Contenedor principal de la vista */
+.perfil-view {
+    /* Añade espacio alrededor de toda la vista */
+    padding: 40px 20px; 
+    /* Color de fondo suave para contrastar con la tarjeta blanca */
+    background-color: var(--lumo-contrast-5pct);
+    /* Asegura que ocupe al menos toda la altura de la pantalla */
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+/* 2. Tarjeta del perfil */
+.perfil-card {
+    /* Fondo blanco limpio */
+    background-color: var(--lumo-base-color);
+    /* Bordes redondeados más pronunciados */
+    border-radius: var(--lumo-border-radius-l);
+    /* Sombra suave y elegante */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    /* Borde sutil */
+    border: 1px solid var(--lumo-contrast-10pct);
+    /* Transición suave para efectos hover si los hubiera */
+    transition: box-shadow 0.3s ease-in-out;
+    /* Asegura que no se desborde */
+    overflow: hidden;
+}
+
+/* 3. Padding interno del contenido de la tarjeta */
+.perfil-card-content {
+    /* Espacio generoso dentro de la tarjeta */
+    padding: 40px !important; 
+}
+
+/* 4. Encabezado (Avatar y Título) */
+.perfil-header {
+    /* Margen inferior para separar del formulario */
+    margin-bottom: 30px !important;
+}
+
+/* 5. Formulario */
+.perfil-form {
+    /* Aumenta el espacio vertical entre las filas de campos */
+    --vaadin-form-layout-row-spacing: 25px;
+    /* Aumenta el espacio horizontal entre columnas */
+    --vaadin-form-layout-column-spacing: 25px;
+    /* Margen inferior para separar de los botones de acción */
+    margin-bottom: 40px !important;
+}
+
+/* 6. Campos de solo lectura (Rol de Usuario) */
+.readonly-field {
+    /* Fondo gris claro para indicar que no es editable */
+    --vaadin-input-field-background: var(--lumo-contrast-5pct);
+    /* Color de texto más tenue */
+    --vaadin-input-field-value-color: var(--lumo-secondary-text-color);
+    /* Borde más sutil */
+    border-color: var(--lumo-contrast-10pct) !important;
+}
+
+/* 7. Contenedor de botones de acción */
+.perfil-actions {
+    /* Padding superior para separar del formulario */
+    padding-top: 20px !important;
+    /* Línea separadora sutil en la parte superior */
+    border-top: 1px solid var(--lumo-contrast-10pct);
+}
+
+/* 8. Estilos de los botones */
+.btn-primary {
+    /* Botón más grande y llamativo */
+    height: var(--lumo-size-l) !important;
+    padding: 0 30px !important;
+    border-radius: var(--lumo-border-radius-m) !important;
+    font-weight: 600 !important;
+    /* Sombra sutil para dar profundidad */
+    box-shadow: 0 4px 12px var(--lumo-primary-color-50pct);
+}
+
+.btn-tertiary {
+    /* Botón secundario con un color más neutro */
+    color: var(--lumo-secondary-text-color) !important;
+    font-weight: 600 !important;
+}
+
+/* Ajustes para pantallas pequeñas (móviles) */
+@media (max-width: 600px) {
+    .perfil-view {
+        /* Reduce el padding lateral en móviles */
+        padding: 20px 10px;
+    }
+    .perfil-card-content {
+        /* Reduce el padding interno de la tarjeta en móviles */
+        padding: 25px !important;
+    }
+    .perfil-actions {
+        /* En móviles, los botones ocupan todo el ancho y se apilan */
+        flex-direction: column-reverse;
+        gap: 15px;
+    }
+    .perfil-actions > vaadin-button {
+        /* Botones de ancho completo */
+        width: 100%;
+        /* Centrar el texto */
+        display: flex;
+        justify-content: center;
+    }
+    .btn-tertiary {
+        /* Margen superior para el botón secundario al estar apilado */
+        margin-top: 10px;
+    }
+}
+
+
+/* --- MEJORA DE INTERACCIÓN --- */
+
+/* Hace que TODOS los botones de la app tengan el cursor de mano */
+vaadin-button, 
+vaadin-drawer-toggle {
+    cursor: pointer !important;
+}
+
+/* Específicamente para los botones del header si quieres darles un efecto extra */
+header vaadin-button:hover {
+    background-color: var(--lumo-contrast-5pct);
+    transition: background-color 0.2s;
+}
+
+/* Para el botón de "Cerrar Sesión" que es tipo ERROR */
+header vaadin-button[theme~="error"]:hover {
+    background-color: rgba(231, 76, 60, 0.1); /* Un rojo muy suave al pasar el ratón */
+}

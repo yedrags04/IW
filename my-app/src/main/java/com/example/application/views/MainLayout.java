@@ -1,9 +1,7 @@
 package com.example.application.views;
 
-
-import com.vaadin.flow.component.notification.Notification;
-
 import com.example.application.security.AuthService;
+import com.example.application.views.perfil.PerfilView; // Importa tu nueva vista
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
@@ -36,7 +34,6 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
     public MainLayout(AuthService authService) {
         this.authService = authService;
         
-        // El Drawer empuja el contenido y empieza cerrado
         setPrimarySection(Section.DRAWER);
         setDrawerOpened(false); 
 
@@ -45,53 +42,52 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
     }
 
     private void addHeaderContent() {
-    DrawerToggle toggle = new DrawerToggle();
-    toggle.setAriaLabel("Menu toggle");
+        DrawerToggle toggle = new DrawerToggle();
+        toggle.setAriaLabel("Menu toggle");
 
-    viewTitle = new H1();
-    viewTitle.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.Margin.NONE);
+        viewTitle = new H1();
+        viewTitle.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.Margin.NONE);
 
-    // --- BOTONES DE ACCIÓN (DERECHA) ---
-    
-    // Botón para ir al Carrito
-    Button cartBtn = new Button(VaadinIcon.CART.create());
-    cartBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-    cartBtn.addClickListener(e -> UI.getCurrent().navigate("carrito"));
-    cartBtn.getElement().setAttribute("title", "Ver carrito");
+        // --- BOTONES DE ACCIÓN (DERECHA) ---
+        
+        // Botón para ir al Carrito
+        Button cartBtn = new Button(VaadinIcon.CART.create());
+        cartBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        cartBtn.addClickListener(e -> UI.getCurrent().navigate("carrito"));
+        cartBtn.setTooltipText("Ver carrito");
 
-    // Botón para el Icono de Persona
-    Button personBtn = new Button();
-    personBtn.setIcon(VaadinIcon.USER.create());
-    personBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);
-    personBtn.getElement().getStyle().set("font-size", "1.5rem"); // tamaño icono
-    personBtn.addClickListener(e -> Notification.show("Icono de persona clicado"));
-    personBtn.getElement().setAttribute("title", "Perfil");
+        // Botón para el Icono de Persona -> AHORA NAVEGA A PERFIL
+        Button personBtn = new Button(VaadinIcon.USER.create());
+        personBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        personBtn.getStyle().set("font-size", "1.5rem");
+        // Navegación directa a la ruta "perfil" definida en PerfilView
+        personBtn.addClickListener(e -> UI.getCurrent().navigate("perfil")); 
+        personBtn.setTooltipText("Mi Perfil");
 
-    // Botón para Cerrar Sesión
-    Button logoutBtn = new Button("Cerrar Sesión", VaadinIcon.SIGN_OUT.create());
-    logoutBtn.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
-    logoutBtn.addClickListener(e -> {
-        authService.logout();
-        UI.getCurrent().navigate(""); // Redirige a la raíz (Login)
-    });
+        // Botón para Cerrar Sesión
+        Button logoutBtn = new Button("Cerrar Sesión", VaadinIcon.SIGN_OUT.create());
+        logoutBtn.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
+        logoutBtn.addClickListener(e -> {
+            authService.logout();
+            UI.getCurrent().navigate(""); 
+        });
 
-    // Contenedor alineado a la derecha
-    HorizontalLayout actionLayout = new HorizontalLayout(cartBtn, personBtn, logoutBtn);
-    actionLayout.addClassNames(LumoUtility.Margin.Left.AUTO);
-    actionLayout.setAlignItems(FlexComponent.Alignment.CENTER);
-    actionLayout.setSpacing(true);
+        // Contenedor alineado a la derecha
+        HorizontalLayout actionLayout = new HorizontalLayout(cartBtn, personBtn, logoutBtn);
+        actionLayout.addClassNames(LumoUtility.Margin.Left.AUTO);
+        actionLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+        actionLayout.setSpacing(true);
 
-    Header header = new Header(toggle, viewTitle, actionLayout);
-    header.addClassNames(
-        LumoUtility.Display.FLEX, 
-        LumoUtility.AlignItems.CENTER, 
-        LumoUtility.Padding.Horizontal.MEDIUM
-    );
-    header.setWidthFull();
+        Header header = new Header(toggle, viewTitle, actionLayout);
+        header.addClassNames(
+            LumoUtility.Display.FLEX, 
+            LumoUtility.AlignItems.CENTER, 
+            LumoUtility.Padding.Horizontal.MEDIUM
+        );
+        header.setWidthFull();
 
-    addToNavbar(true, header);
-}
-
+        addToNavbar(true, header);
+    }
 
     private void addDrawerContent() {
         Span appName = new Span("TuFood App");
@@ -108,7 +104,6 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
         List<MenuEntry> menuEntries = MenuConfiguration.getMenuEntries();
         
         menuEntries.forEach(entry -> {
-            // SOLUCIÓN AL ERROR: Convertimos el IconUrl de String a SvgIcon
             if (entry.icon() != null) {
                 nav.addItem(new SideNavItem(entry.title(), entry.path(), new SvgIcon(entry.icon())));
             } else {
@@ -125,7 +120,6 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
     @Override
     public void afterNavigation(AfterNavigationEvent event) {
         viewTitle.setText(getCurrentPageTitle());
-        // Cerramos el menú al cambiar de página
         setDrawerOpened(false); 
     }
 
