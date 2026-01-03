@@ -17,6 +17,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 
@@ -58,6 +59,19 @@ public class LoginFlipView extends VerticalLayout {
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.CENTER);
 
+            HorizontalLayout topBar = new HorizontalLayout();
+    topBar.setWidthFull();
+    topBar.setJustifyContentMode(JustifyContentMode.END); // alinea a la derecha
+    topBar.getStyle().set("padding", "1rem"); // espacio desde el borde
+    // Icono de persona
+    Button personIcon = new Button();
+    personIcon.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);
+    personIcon.setIcon(VaadinIcon.USER.create());
+    personIcon.getElement().getStyle().set("font-size", "1.5rem"); // tamaño del icono
+    personIcon.addClickListener(e -> Notification.show("Icono persona clicado"));
+    topBar.add(personIcon);
+
+    add(topBar); // se añade al layout principal
         container = new Div(); 
         container.setId("container"); 
 
@@ -168,6 +182,17 @@ public class LoginFlipView extends VerticalLayout {
         signUpBtn.setWidthFull();
         signUpBtn.getStyle().set("margin-top", "2.5rem"); 
 
+        // NUEVO BOTÓN VOLVER AL LOGIN
+        Button backToLoginBtn = new Button("Volver al Login");
+        backToLoginBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        backToLoginBtn.setWidthFull();
+        backToLoginBtn.getStyle().set("margin-top", "1rem");
+
+        backToLoginBtn.addClickListener(e -> {
+            // Quita la clase "active" del contenedor para volver al login
+            container.removeClassName("active");
+        });
+
         Binder<RegistrationForm> binder = new Binder<>(RegistrationForm.class);
 
         signUpBtn.addClickListener(event -> {
@@ -177,7 +202,7 @@ public class LoginFlipView extends VerticalLayout {
                 String result = authService.register(name.getValue(), email.getValue(), password.getValue());
                 if ("SUCCESS".equals(result)) {
                     Notification.show("¡Éxito! Inicie sesión.");
-                    container.removeClassName("active"); // Usa la variable de clase corregida
+                    container.removeClassName("active"); 
                     binder.readBean(new RegistrationForm()); 
                 } else {
                     feedbackLabel.setText(result);
@@ -190,9 +215,10 @@ public class LoginFlipView extends VerticalLayout {
             }
         });
 
-        Html socialIcons = new Html("<div class='social-icons'>" + SVG_SOCIAL_FB + SVG_SOCIAL_TWITTER + SVG_SOCIAL_GITHUB + SVG_SOCIAL_LINKEDIN + "</div>");
-        content.add(title, name, email, password, signUpBtn, socialIcons);
-        registerPanel.add(content);
-        return registerPanel;
-    }
+    Html socialIcons = new Html("<div class='social-icons'>" + SVG_SOCIAL_FB + SVG_SOCIAL_TWITTER + SVG_SOCIAL_GITHUB + SVG_SOCIAL_LINKEDIN + "</div>");
+    content.add(title, name, email, password, signUpBtn, backToLoginBtn, feedbackLabel, socialIcons);
+    registerPanel.add(content);
+    return registerPanel;
+}
+
 }
