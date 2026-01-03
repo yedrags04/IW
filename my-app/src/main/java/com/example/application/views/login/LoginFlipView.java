@@ -59,27 +59,16 @@ public class LoginFlipView extends VerticalLayout {
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.CENTER);
 
-            HorizontalLayout topBar = new HorizontalLayout();
-    topBar.setWidthFull();
-    topBar.setJustifyContentMode(JustifyContentMode.END); // alinea a la derecha
-    topBar.getStyle().set("padding", "1rem"); // espacio desde el borde
-    // Icono de persona
-    Button personIcon = new Button();
-    personIcon.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);
-    personIcon.setIcon(VaadinIcon.USER.create());
-    personIcon.getElement().getStyle().set("font-size", "1.5rem"); // tamaño del icono
-    personIcon.addClickListener(e -> Notification.show("Icono persona clicado"));
-    topBar.add(personIcon);
-
-    add(topBar); // se añade al layout principal
         container = new Div(); 
         container.setId("container"); 
 
-        Button registerButton = new Button("Register", new Html(SVG_ARROW_RIGHT));
+        // Botón para ir al registro (estará en el panel naranja frontal)
+        Button registerButton = new Button("Registrarse", new Html(SVG_ARROW_RIGHT));
         registerButton.setId("register"); 
         registerButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
         
-        Button flipLoginButton = new Button("Log In", new Html(SVG_ARROW_LEFT));
+        // Botón para volver al login (estará en el panel naranja trasero)
+        Button flipLoginButton = new Button("Iniciar sesión", new Html(SVG_ARROW_LEFT));
         flipLoginButton.setId("login"); 
         flipLoginButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
 
@@ -88,9 +77,9 @@ public class LoginFlipView extends VerticalLayout {
         
         container.add(
             createLoginPanel(),
+            createRegisterPanel(),
             createPageFront(registerButton),
-            createPageBack(flipLoginButton), // Se pasa el botón como argumento
-            createRegisterPanel()
+            createPageBack(flipLoginButton) // Se pasa el botón como argumento
         );
         
         add(container);
@@ -145,7 +134,7 @@ public class LoginFlipView extends VerticalLayout {
         pageBack.addClassNames("page", "back");
         Div content = new Div();
         content.addClassName("content");
-        content.add(new Html(SVG_LOG_IN), new H1("Welcome Back!"), new Paragraph("Please login with your account."), btn);
+        content.add(new Html(SVG_LOG_IN), new H1("¡Bienvenido de nuevo!"), new Paragraph("Por favor, inicia sesión con tu cuenta."), btn);
         pageBack.add(content);
         return pageBack;
     }
@@ -182,16 +171,7 @@ public class LoginFlipView extends VerticalLayout {
         signUpBtn.setWidthFull();
         signUpBtn.getStyle().set("margin-top", "2.5rem"); 
 
-        // NUEVO BOTÓN VOLVER AL LOGIN
-        Button backToLoginBtn = new Button("Volver al Login");
-        backToLoginBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        backToLoginBtn.setWidthFull();
-        backToLoginBtn.getStyle().set("margin-top", "1rem");
-
-        backToLoginBtn.addClickListener(e -> {
-            // Quita la clase "active" del contenedor para volver al login
-            container.removeClassName("active");
-        });
+        
 
         Binder<RegistrationForm> binder = new Binder<>(RegistrationForm.class);
 
@@ -216,7 +196,7 @@ public class LoginFlipView extends VerticalLayout {
         });
 
     Html socialIcons = new Html("<div class='social-icons'>" + SVG_SOCIAL_FB + SVG_SOCIAL_TWITTER + SVG_SOCIAL_GITHUB + SVG_SOCIAL_LINKEDIN + "</div>");
-    content.add(title, name, email, password, signUpBtn, backToLoginBtn, feedbackLabel, socialIcons);
+    content.add(title, name, email, password, signUpBtn, feedbackLabel, socialIcons);
     registerPanel.add(content);
     return registerPanel;
 }
