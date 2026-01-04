@@ -7,8 +7,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
-
-// --- Imports para Bean Validation ---
 import jakarta.validation.Validator;
 import jakarta.validation.ConstraintViolation;
 import java.util.Set;
@@ -17,7 +15,7 @@ import java.util.Set;
 public class AuthService {
 
     private final UsuarioRepository usuarioRepository;
-    private final Validator validator; // Inyectar el Validador de Bean Validation
+    private final Validator validator;
 
     @Autowired
     public AuthService(UsuarioRepository usuarioRepository, Validator validator) {
@@ -34,19 +32,20 @@ public class AuthService {
         if (userOpt.isPresent() && userOpt.get().getContrasena().equals(password)) {
             Usuario user = userOpt.get();
             
+            // Guardamos datos individuales
             VaadinSession.getCurrent().setAttribute(ROL_SESSION_ATTRIBUTE, user.getRol());
             VaadinSession.getCurrent().setAttribute(USERNAME_SESSION_ATTRIBUTE, user.getNombre());
+            
+            // NUEVO: Guardamos el objeto completo para que ProductosView lo encuentre
+            VaadinSession.getCurrent().setAttribute("usuario", user);
             
             return true;
         }
         return false;
     }
 
-    // Método de registro con todas las comprobaciones (Unicidad y Bean Validation)
     @Transactional
     public String register(String name, String email, String password) {
-        
-        // 1. Comprobación de unicidad (si no se hace en el front-end)
         if (usuarioRepository.findByNombre(name).isPresent()) {
             return "El nombre de usuario ya está en uso.";
         }
@@ -56,16 +55,12 @@ public class AuthService {
         
         Usuario newUser = new Usuario(name, password, "USER", email); 
         
-        // 2. Ejecutar Bean Validation (comprueba @Size, @NotEmpty, @Email)
         Set<ConstraintViolation<Usuario>> violations = validator.validate(newUser);
         if (!violations.isEmpty()) {
-            // Devuelve el primer error de validación de la entidad
             return violations.iterator().next().getMessage();
         }
 
-        // 3. Guardar en TiDB Cloud
         try {
-            // ⚠️ ADVERTENCIA: La contraseña debe ser hasheada (BCrypt) en un entorno real.
             usuarioRepository.save(newUser);
             return "SUCCESS";
         } catch (Exception e) {
@@ -75,7 +70,9 @@ public class AuthService {
     }
 
     public void logout() {
-        VaadinSession.getCurrent().getSession().invalidate();
+        if (VaadinSession.getCurrent().getSession() != null) {
+            VaadinSession.getCurrent().getSession().invalidate();
+        }
         VaadinSession.getCurrent().close();
     }
 

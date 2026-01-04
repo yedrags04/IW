@@ -1,24 +1,35 @@
-package com.example.application.views.main; // Corregido para que coincida con la carpeta 'Main'
+package com.example.application.views.main;
 
+import com.example.application.model.Producto;
+import com.example.application.repository.ProductoRepository;
+import com.example.application.services.ShoppingCartService;
 import com.example.application.views.MainLayout;
+import com.example.application.views.productos.ProductosViewCard;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.*;
-import com.vaadin.flow.component.icon.Icon; // Importación genérica de Icon
-import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.router.RouteAlias;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.List;
 
 @PageTitle("Inicio | Tu Food")
 @Route(value = "home", layout = MainLayout.class)
 public class HomeView extends VerticalLayout {
 
-    public HomeView() {
+    private final ProductoRepository productoRepository;
+    private final ShoppingCartService cartService;
+
+    @Autowired
+    public HomeView(ProductoRepository productoRepository, ShoppingCartService cartService) {
+        this.productoRepository = productoRepository;
+        this.cartService = cartService;
+
         addClassName("home-view");
         setPadding(false);
         setSpacing(false);
@@ -43,11 +54,10 @@ public class HomeView extends VerticalLayout {
 
         H1 title = new H1("¡Tu comida favorita, a un clic!");
         Paragraph description = new Paragraph("Descubre los mejores sabores de tu ciudad y recíbelos en tiempo récord.");
-        
-        Button cta = new Button("Explorar Menú", VaadinIcon.SEARCH.create());
+
+        Button cta = new Button("Explorar Menú");
         cta.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
-        cta.addClickListener(e -> UI.getCurrent().navigate("productos"));
-        cta.addClassName("cta-button");
+        cta.addClickListener(e -> UI.getCurrent().navigate("image-gallery")); // Cambiado a tu ruta de productos
 
         content.add(title, description, cta);
         hero.add(content);
@@ -68,24 +78,22 @@ public class HomeView extends VerticalLayout {
         categories.setSpacing(true);
         categories.addClassName("category-container");
 
-        // Usamos CAKE en lugar de ICE_CREAM para asegurar compatibilidad
         categories.add(
-        createCategoryItem("Hamburguesas", VaadinIcon.SHOP.create()),
-        createCategoryItem("Pizzas", VaadinIcon.PIE_CHART.create()),
-        createCategoryItem("Postres", VaadinIcon.STAR.create()), // Cambiado a STAR para asegurar compilación
-        createCategoryItem("Bebidas", VaadinIcon.GLASS.create())
-    );
+            createCategoryItem("Hamburguesas"),
+            createCategoryItem("Pizzas"),
+            createCategoryItem("Postres"),
+            createCategoryItem("Bebidas")
+        );
 
         section.add(title, categories);
         return section;
     }
 
-    private Div createCategoryItem(String name, Icon icon) { // 'Icon' debe ser de com.vaadin.flow.component.icon
+    private Div createCategoryItem(String name) {
         Div item = new Div();
         item.addClassName("category-card");
-        
         Span label = new Span(name);
-        item.add(icon, label);
+        item.add(label);
         return item;
     }
 
@@ -97,37 +105,36 @@ public class HomeView extends VerticalLayout {
         H2 title = new H2("Lo más pedido");
         title.addClassName("section-title");
 
-        HorizontalLayout products = new HorizontalLayout();
-        products.setWidthFull();
-        products.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
-        products.addClassName("product-grid");
+        // CAMBIO CLAVE: Usamos un Div con CSS Grid en lugar de HorizontalLayout
+        Div productsGrid = new Div();
+        productsGrid.setWidthFull();
+        productsGrid.addClassName("custom-products-grid");
 
-        products.add(createProductCard("Classic Burger", "12.50€", "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=300&h=200&auto=format&fit=crop"));
-        products.add(createProductCard("Pizza Pepperoni", "14.00€", "https://images.unsplash.com/photo-1628840042765-356cda07504e?q=80&w=300&h=200&auto=format&fit=crop"));
-        products.add(createProductCard("Sushi Mix", "18.20€", "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?q=80&w=300&h=200&auto=format&fit=crop"));
+        // Estilos Inline para el Grid (también puedes ponerlo en tu .css)
+        productsGrid.getStyle()
+            .set("display", "grid")
+            .set("grid-template-columns", "repeat(2, 1fr)") // 2 columnas iguales
+            .set("gap", "20px")                             // Espacio entre tarjetas
+            .set("max-width", "900px")                     // Ancho máximo del contenedor
+            .set("margin", "0 auto")                       // Centrar el grid en la página
+            .set("justify-items", "center");               // Centrar tarjetas dentro de su celda
 
-        section.add(title, products);
+        List<Producto> productos = productoRepository.findAll();
+        for (int i = 0; i < productos.size(); i++) {
+            Producto p = productos.get(i);
+            ProductosViewCard card = new ProductosViewCard(p, cartService);
+            
+            // Si es el último elemento y el total es impar...
+            if (i == productos.size() - 1 && productos.size() % 2 != 0) {
+                // Hacemos que la última tarjeta ocupe las dos columnas y se centre
+                card.getStyle().set("grid-column", "1 / span 2");
+                card.getStyle().set("justify-self", "center");
+            }
+            
+            productsGrid.add(card);
+        }
+
+        section.add(title, productsGrid);
         return section;
-    }
-
-    private Div createProductCard(String name, String price, String imgUrl) {
-        Div card = new Div();
-        card.addClassName("product-card");
-
-        Image img = new Image(imgUrl, name);
-        H3 title = new H3(name);
-        Span p = new Span(price);
-        p.addClassName("price-tag");
-
-        Button addBtn = new Button(VaadinIcon.PLUS.create());
-        addBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
-
-        HorizontalLayout footer = new HorizontalLayout(p, addBtn);
-        footer.setWidthFull();
-        footer.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
-        footer.setAlignItems(Alignment.CENTER);
-
-        card.add(img, title, footer);
-        return card;
     }
 }

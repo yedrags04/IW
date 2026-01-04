@@ -43,4 +43,18 @@ public class Producto {
     public void setCategoria(String categoria) {
         this.categoria = categoria;
     }
+
+    @Override
+public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Producto producto = (Producto) o;
+    return id != null && id.equals(producto.id);
+}
+
+@Override
+public int hashCode() {
+    return getClass().hashCode();
+}
+
 }
