@@ -108,7 +108,7 @@ public class LoginFlipView extends VerticalLayout {
         
         loginBtn.addClickListener(e -> {
             if (authService.authenticate(username.getValue(), password.getValue())) {
-                UI.getCurrent().navigate("tufood"); 
+                UI.getCurrent().navigate("home"); 
             } else {
                 errorLabel.setVisible(true);
             }
