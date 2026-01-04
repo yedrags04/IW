@@ -6,12 +6,13 @@ import com.example.application.views.productos.ProductosView;
 import com.example.application.views.productos.AddProductView;
 import com.example.application.views.tufood.TuFoodView;
 import com.example.application.views.perfil.PerfilView;
-import com.example.application.views.login.LoginFlipView; // IMPORTANTE: Importar la vista de Login
+import com.example.application.views.login.LoginFlipView;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -25,10 +26,13 @@ import com.vaadin.flow.server.auth.AnonymousAllowed;
 import com.vaadin.flow.server.menu.MenuConfiguration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import org.vaadin.lineawesome.LineAwesomeIcon;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 
 @Layout
 @AnonymousAllowed
 public class MainLayout extends AppLayout implements AfterNavigationObserver {
+
+
 
     private H1 viewTitle;
     private final AuthService authService;
@@ -61,12 +65,8 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
         Button logoutBtn = new Button("Salir", VaadinIcon.SIGN_OUT.create());
         logoutBtn.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
         
-        // --- CAMBIO AQUÍ ---
-        logoutBtn.addClickListener(e -> {
-            authService.logout();
-            // Redirigimos a la vista de Login en lugar de a la Home
-            UI.getCurrent().navigate(LoginFlipView.class); 
-        });
+        // Llamamos a la función que abre el diálogo de confirmación
+        logoutBtn.addClickListener(e -> confirmarSalida());
 
         HorizontalLayout actionLayout = new HorizontalLayout(cartBtn, personBtn, logoutBtn);
         actionLayout.addClassNames(LumoUtility.Margin.Left.AUTO, LumoUtility.AlignItems.CENTER);
@@ -77,6 +77,28 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
         header.setWidthFull();
 
         addToNavbar(true, header);
+    }
+
+    // --- DIÁLOGO DE CONFIRMACIÓN ---
+    private void confirmarSalida() {
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("Cerrar Sesión");
+        
+        VerticalLayout dialogLayout = new VerticalLayout(new Span("¿Estás seguro de que deseas salir de TuFood?"));
+        dialog.add(dialogLayout);
+
+        Button logoutButton = new Button("Sí", VaadinIcon.SIGN_OUT.create(), e -> {
+            authService.logout();
+            UI.getCurrent().navigate(LoginFlipView.class);
+            dialog.close();
+        });
+        logoutButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_ERROR);
+
+        Button cancelButton = new Button("Cancelar", e -> dialog.close());
+        cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+
+        dialog.getFooter().add(cancelButton, logoutButton);
+        dialog.open();
     }
 
     private void addDrawerContent() {
