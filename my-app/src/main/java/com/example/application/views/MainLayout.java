@@ -1,16 +1,19 @@
 package com.example.application.views;
 
 import com.example.application.security.AuthService;
-import com.example.application.views.perfil.PerfilView; // Importa tu nueva vista
+import com.example.application.views.main.HomeView;
+import com.example.application.views.productos.ProductosView;
+import com.example.application.views.productos.AddProductView;
+import com.example.application.views.tufood.TuFoodView;
+import com.example.application.views.perfil.PerfilView;
+import com.example.application.views.login.LoginFlipView; // IMPORTANTE: Importar la vista de Login
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.*;
-import com.vaadin.flow.component.icon.SvgIcon;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.sidenav.SideNav;
@@ -20,9 +23,8 @@ import com.vaadin.flow.router.AfterNavigationObserver;
 import com.vaadin.flow.router.Layout;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 import com.vaadin.flow.server.menu.MenuConfiguration;
-import com.vaadin.flow.server.menu.MenuEntry;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import java.util.List;
+import org.vaadin.lineawesome.LineAwesomeIcon;
 
 @Layout
 @AnonymousAllowed
@@ -48,42 +50,30 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
         viewTitle = new H1();
         viewTitle.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.Margin.NONE);
 
-        // --- BOTONES DE ACCIÓN (DERECHA) ---
-        
-        // Botón para ir al Carrito
         Button cartBtn = new Button(VaadinIcon.CART.create());
         cartBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         cartBtn.addClickListener(e -> UI.getCurrent().navigate("carrito"));
-        cartBtn.setTooltipText("Ver carrito");
 
-        // Botón para el Icono de Persona -> AHORA NAVEGA A PERFIL
         Button personBtn = new Button(VaadinIcon.USER.create());
         personBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        personBtn.getStyle().set("font-size", "1.5rem");
-        // Navegación directa a la ruta "perfil" definida en PerfilView
-        personBtn.addClickListener(e -> UI.getCurrent().navigate("perfil")); 
-        personBtn.setTooltipText("Mi Perfil");
+        personBtn.addClickListener(e -> UI.getCurrent().navigate(PerfilView.class)); 
 
-        // Botón para Cerrar Sesión
-        Button logoutBtn = new Button("Cerrar Sesión", VaadinIcon.SIGN_OUT.create());
+        Button logoutBtn = new Button("Salir", VaadinIcon.SIGN_OUT.create());
         logoutBtn.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
+        
+        // --- CAMBIO AQUÍ ---
         logoutBtn.addClickListener(e -> {
             authService.logout();
-            UI.getCurrent().navigate(""); 
+            // Redirigimos a la vista de Login en lugar de a la Home
+            UI.getCurrent().navigate(LoginFlipView.class); 
         });
 
-        // Contenedor alineado a la derecha
         HorizontalLayout actionLayout = new HorizontalLayout(cartBtn, personBtn, logoutBtn);
-        actionLayout.addClassNames(LumoUtility.Margin.Left.AUTO);
-        actionLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+        actionLayout.addClassNames(LumoUtility.Margin.Left.AUTO, LumoUtility.AlignItems.CENTER);
         actionLayout.setSpacing(true);
 
         Header header = new Header(toggle, viewTitle, actionLayout);
-        header.addClassNames(
-            LumoUtility.Display.FLEX, 
-            LumoUtility.AlignItems.CENTER, 
-            LumoUtility.Padding.Horizontal.MEDIUM
-        );
+        header.addClassNames(LumoUtility.Display.FLEX, LumoUtility.AlignItems.CENTER, LumoUtility.Padding.Horizontal.MEDIUM);
         header.setWidthFull();
 
         addToNavbar(true, header);
@@ -101,29 +91,36 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
 
     private SideNav createNavigation() {
         SideNav nav = new SideNav();
-        List<MenuEntry> menuEntries = MenuConfiguration.getMenuEntries();
-        
-        menuEntries.forEach(entry -> {
-            if (entry.icon() != null) {
-                nav.addItem(new SideNavItem(entry.title(), entry.path(), new SvgIcon(entry.icon())));
-            } else {
-                nav.addItem(new SideNavItem(entry.title(), entry.path()));
-            }
-        });
+
+        nav.addItem(new SideNavItem("Inicio", HomeView.class, LineAwesomeIcon.HOME_SOLID.create()));
+        nav.addItem(new SideNavItem("Productos", ProductosView.class, LineAwesomeIcon.LIST_SOLID.create()));
+        nav.addItem(new SideNavItem("Mi Perfil", PerfilView.class, LineAwesomeIcon.USER_SOLID.create()));
+
+        if (authService.isAdmin()) {
+            nav.addItem(new SideNavItem("Gestión Pedidos", TuFoodView.class, LineAwesomeIcon.UTENSILS_SOLID.create()));
+            nav.addItem(new SideNavItem("Añadir Producto", AddProductView.class, LineAwesomeIcon.PLUS_CIRCLE_SOLID.create()));
+        }
+
         return nav;
     }
 
     private Footer createFooter() {
-        return new Footer();
+        Footer footer = new Footer();
+        if (authService.isUserLoggedIn()) {
+            Object nameAttr = com.vaadin.flow.server.VaadinSession.getCurrent().getAttribute(AuthService.USERNAME_SESSION_ATTRIBUTE);
+            String userName = nameAttr != null ? nameAttr.toString() : "Usuario";
+            
+            footer.add(new Span("Sesión: " + userName));
+            footer.addClassNames(LumoUtility.FontSize.XSMALL, LumoUtility.Padding.MEDIUM, LumoUtility.TextColor.SECONDARY);
+        }
+        return footer;
     }
 
     @Override
     public void afterNavigation(AfterNavigationEvent event) {
-        viewTitle.setText(getCurrentPageTitle());
+        if (getContent() != null) {
+            viewTitle.setText(MenuConfiguration.getPageHeader(getContent()).orElse("TuFood"));
+        }
         setDrawerOpened(false); 
-    }
-
-    private String getCurrentPageTitle() {
-        return MenuConfiguration.getPageHeader(getContent()).orElse("");
     }
 }

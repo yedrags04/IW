@@ -13,8 +13,6 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
-import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
-import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.EmailField;
@@ -22,7 +20,6 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
-import org.springframework.beans.factory.annotation.Autowired;
 
 @PageTitle("Mi Perfil | Tu Food")
 @Route(value = "perfil", layout = MainLayout.class)
@@ -33,10 +30,7 @@ public class PerfilView extends VerticalLayout {
     private TextField nombre;
     private TextField apellidos;
     private EmailField email;
-    private TextField restaurante;
-    private TextField rol;
 
-    @Autowired
     public PerfilView(UsuarioRepository usuarioRepository) {
         this.usuarioRepository = usuarioRepository;
         
@@ -59,7 +53,6 @@ public class PerfilView extends VerticalLayout {
     }
     
     private void construirVista() {
-        // 1. Configuración del contenedor principal de la vista
         addClassName("perfil-view");
         setSizeFull();
         setJustifyContentMode(JustifyContentMode.CENTER);
@@ -73,7 +66,7 @@ public class PerfilView extends VerticalLayout {
         card.setPadding(false);
         card.setSpacing(false);
 
-        // --- ENCABEZADO (Avatar y Título) ---
+        // --- ENCABEZADO ---
         HorizontalLayout header = createHeader();
         header.addClassName("perfil-header");
 
@@ -87,62 +80,43 @@ public class PerfilView extends VerticalLayout {
         nombre.setValue(usuarioActual.getNombre());
 
         apellidos = new TextField("Apellidos");
-        apellidos.setValue(""); // De momento sin campo de apellido en BD
+        apellidos.setPlaceholder("Añade tus apellidos");
+        apellidos.setValue(""); 
 
         email = new EmailField("Correo Electrónico");
         email.setPrefixComponent(new Icon(VaadinIcon.ENVELOPE));
         email.setValue(usuarioActual.getEmail());
 
-        restaurante = new TextField("Restaurante");
-        restaurante.setPrefixComponent(new Icon(VaadinIcon.SHOP));
-        restaurante.setValue(""); // Campo futuro
-
-        // Campo Rol (Solo lectura)
-        rol = new TextField("Rol de Usuario");
-        rol.setPrefixComponent(new Icon(VaadinIcon.SHIELD));
-        rol.setValue(usuarioActual.getRol());
-        rol.setReadOnly(true);
-        rol.addClassName("readonly-field");
-
-        // Organización del Layout (Responsivo)
-        formLayout.add(nombre, apellidos, email, restaurante, rol);
+        // Organización del Layout
+        formLayout.add(nombre, apellidos, email);
         formLayout.setResponsiveSteps(
                 new FormLayout.ResponsiveStep("0", 1),
                 new FormLayout.ResponsiveStep("600px", 2)
         );
 
-        // Configuración de columnas
+        // Configuración de columnas (El email ocupa toda la fila)
         formLayout.setColspan(email, 2);
-        formLayout.setColspan(restaurante, 2);
-        formLayout.setColspan(rol, 2);
 
         // --- BOTONES DE ACCIÓN ---
         Button guardar = new Button("Guardar Cambios", new Icon(VaadinIcon.CHECK));
         guardar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        guardar.addClassName("btn-primary");
         guardar.addClickListener(e -> guardarCambios());
 
         Button cancelar = new Button("Cancelar");
         cancelar.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        cancelar.addClassName("btn-tertiary");
         cancelar.addClickListener(e -> recargarDatos());
 
         HorizontalLayout actions = new HorizontalLayout(guardar, cancelar);
-        actions.addClassName("perfil-actions");
         actions.setWidthFull();
         actions.setJustifyContentMode(JustifyContentMode.END);
         actions.setSpacing(true);
 
-        // Montaje de la tarjeta
         card.add(header, formLayout, actions);
-        
-        // Agregar la tarjeta al centro de la vista
         add(card);
     }
 
     private void guardarCambios() {
         try {
-            // Validaciones básicas
             if (nombre.getValue().trim().isEmpty()) {
                 mostrarError("El nombre no puede estar vacío");
                 return;
@@ -152,20 +126,15 @@ public class PerfilView extends VerticalLayout {
                 return;
             }
             
-            // Actualizar datos del usuario
             usuarioActual.setNombre(nombre.getValue().trim());
             usuarioActual.setEmail(email.getValue().trim());
             
-            // Guardar en BD
             usuarioRepository.save(usuarioActual);
-            
-            // Actualizar sesión con el nuevo nombre si cambió
             VaadinSession.getCurrent().setAttribute("userName", usuarioActual.getNombre());
             
             mostrarExito("Perfil actualizado correctamente");
         } catch (Exception ex) {
             mostrarError("Error al guardar: " + ex.getMessage());
-            ex.printStackTrace();
         }
     }
     
@@ -173,7 +142,6 @@ public class PerfilView extends VerticalLayout {
         nombre.setValue(usuarioActual.getNombre());
         email.setValue(usuarioActual.getEmail());
         apellidos.clear();
-        restaurante.clear();
         mostrarInfo("Cambios cancelados");
     }
     
@@ -197,8 +165,6 @@ public class PerfilView extends VerticalLayout {
         header.setAlignItems(Alignment.CENTER);
         header.setSpacing(true);
 
-        // Avatar con las iniciales del usuario
-        String iniciales = usuarioActual.getNombre().substring(0, 1).toUpperCase();
         Avatar avatar = new Avatar(usuarioActual.getNombre());
         avatar.setWidth("80px");
         avatar.setHeight("80px");
@@ -212,7 +178,7 @@ public class PerfilView extends VerticalLayout {
         title.getStyle().set("margin", "0");
         title.getStyle().set("font-size", "1.5rem");
         
-        Paragraph subtitle = new Paragraph("Usuario: " + usuarioActual.getNombre());
+        Paragraph subtitle = new Paragraph("Sesión activa: " + usuarioActual.getNombre());
         subtitle.getStyle().set("color", "var(--lumo-secondary-text-color)");
         subtitle.getStyle().set("margin", "0");
 

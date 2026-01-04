@@ -4,7 +4,6 @@ import com.example.application.repository.UsuarioRepository;
 import com.example.application.model.Usuario;
 import com.vaadin.flow.server.VaadinSession;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 import jakarta.validation.Validator;
@@ -17,7 +16,6 @@ public class AuthService {
     private final UsuarioRepository usuarioRepository;
     private final Validator validator;
 
-    @Autowired
     public AuthService(UsuarioRepository usuarioRepository, Validator validator) {
         this.usuarioRepository = usuarioRepository;
         this.validator = validator; 

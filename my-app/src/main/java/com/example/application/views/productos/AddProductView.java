@@ -1,7 +1,6 @@
 package com.example.application.views.productos;
 
 import com.example.application.model.Producto;
-import com.example.application.model.Usuario;
 import com.example.application.repository.ProductoRepository;
 import com.example.application.security.AuthService;
 import com.example.application.views.MainLayout;
@@ -16,7 +15,6 @@ import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.server.VaadinSession;
 
 @PageTitle("Añadir Producto")
 @Route(value = "add-product", layout = MainLayout.class)

@@ -1,5 +1,6 @@
 package com.example.application.views.tufood;
 
+import com.example.application.security.AuthService;
 import com.example.application.views.MainLayout;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Composite;
@@ -15,16 +16,25 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import com.vaadin.flow.router.Menu; // Asegúrate de importar esto
-import org.vaadin.lineawesome.LineAwesomeIconUrl; // Para usar iconos bonitos
+import com.vaadin.flow.router.Menu;
+import org.vaadin.lineawesome.LineAwesomeIconUrl;
 
-@PageTitle("TuFood")
+@PageTitle("Gestión Pedidos | TuFood") // 1. Título de la pestaña del navegador
 @Route(value = "tufood", layout = MainLayout.class)
-@Menu(order = 0, icon = LineAwesomeIconUrl.UTENSILS_SOLID, title = "Gestión Alimentos")
+@Menu(order = 0, icon = LineAwesomeIconUrl.UTENSILS_SOLID, title = "Gestión Pedidos") // 2. Título en el menú lateral
 public class TuFoodView extends Composite<VerticalLayout> {
 
-    public TuFoodView() {
+    public TuFoodView(AuthService authService) {
         VerticalLayout root = getContent();
+        
+        // --- 1. CONTROL DE ACCESO ---
+        if (!authService.isAdmin()) {
+            root.add(new Span("Acceso denegado. Redirigiendo..."));
+            addAttachListener(e -> getUI().ifPresent(ui -> ui.navigate("home")));
+            return;
+        }
+
+        // --- 2. CONFIGURACIÓN DE LA VISTA ---
         root.addClassName("tu-food-view");
         root.setAlignItems(FlexComponent.Alignment.CENTER);
         root.setSizeFull();
@@ -37,7 +47,6 @@ public class TuFoodView extends Composite<VerticalLayout> {
         mainPanel.setWidthFull();
         mainPanel.setPadding(true);
         mainPanel.setSpacing(true);
-        mainPanel.setSpacing(true);
         mainPanel.getStyle().set("gap", "2.5rem");
 
         // --- 1. ENCABEZADO ---
@@ -46,11 +55,11 @@ public class TuFoodView extends Composite<VerticalLayout> {
         header.setAlignItems(FlexComponent.Alignment.CENTER);
         header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
 
-        H1 title = new H1("Gestión de Alimentos");
+        // 3. Título visual dentro de la página
+        H1 title = new H1("Gestión de Pedidos"); 
         title.addClassNames(LumoUtility.FontSize.XXLARGE, LumoUtility.FontWeight.EXTRABOLD);
 
         Button btnAction = new Button("Nueva Orden", VaadinIcon.PLUS.create());
-        // Forma segura para el botón
         btnAction.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         btnAction.getElement().setAttribute("theme", "large"); 
         
@@ -82,7 +91,6 @@ public class TuFoodView extends Composite<VerticalLayout> {
         TextField productName = new TextField("Producto");
         productName.setPrefixComponent(VaadinIcon.PACKAGE.create());
         productName.setPlaceholder("Ej. Pizza Margarita");
-        // SOLUCIÓN DEFINITIVA: En lugar de usar la variante de Java, usamos el atributo HTML
         productName.getElement().setAttribute("theme", "large");
         
         TextField tableNumber = new TextField("Mesa");

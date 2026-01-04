@@ -1,10 +1,9 @@
 package com.example.application.views.productos;
 
 import com.example.application.model.Producto;
-import com.example.application.model.Usuario;
 import com.example.application.repository.ProductoRepository;
 import com.example.application.services.ShoppingCartService;
-import com.example.application.security.AuthService; // Importante
+import com.example.application.security.AuthService;
 import com.example.application.views.MainLayout;
 import com.vaadin.flow.component.HasComponents;
 import com.vaadin.flow.component.HasStyle;
@@ -16,14 +15,12 @@ import com.vaadin.flow.component.html.OrderedList;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility.*;
 import java.util.List;
 import org.vaadin.lineawesome.LineAwesomeIconUrl;
@@ -55,9 +52,10 @@ public class ProductosView extends Main implements HasComponents, HasStyle {
     private void cargarProductos() {
         List<Producto> productos = productoRepository.findAll();
         imageContainer.removeAll();
-        for (Producto p : productos) {
-            imageContainer.add(new ProductosViewCard(p, cartService));
-        }
+// Dentro del bucle for en ProductosView
+for (Producto p : productos) {
+    imageContainer.add(new ProductosViewCard(p, cartService, authService, productoRepository));
+}
     }
 
     private void constructUI() {
