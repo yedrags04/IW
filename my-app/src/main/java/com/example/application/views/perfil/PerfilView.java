@@ -3,6 +3,8 @@ package com.example.application.views.perfil;
 import com.example.application.model.Usuario;
 import com.example.application.repository.UsuarioRepository;
 import com.example.application.views.MainLayout;
+import com.example.application.views.main.HomeView;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -16,175 +18,144 @@ import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.EmailField;
+import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.binder.BeanValidationBinder;
+import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @PageTitle("Mi Perfil | Tu Food")
 @Route(value = "perfil", layout = MainLayout.class)
 public class PerfilView extends VerticalLayout {
     
     private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
     private Usuario usuarioActual;
-    private TextField nombre;
-    private TextField apellidos;
-    private EmailField email;
+    
+    private TextField nombre = new TextField("Nombre de Usuario");
+    private EmailField email = new EmailField("Correo Electrónico");
+    private PasswordField password = new PasswordField("Nueva Contraseña (dejar en blanco para no cambiar)");
+    
+    private Binder<Usuario> binder = new BeanValidationBinder<>(Usuario.class);
 
-    public PerfilView(UsuarioRepository usuarioRepository) {
+    public PerfilView(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
+        this.passwordEncoder = passwordEncoder;
         
-        // Obtener el usuario logueado de la sesión
+        // 1. Obtener usuario de la sesión
         String nombreUsuario = (String) VaadinSession.getCurrent().getAttribute("userName");
         if (nombreUsuario == null) {
-            mostrarError("Debes estar logueado para acceder al perfil");
+            UI.getCurrent().navigate(HomeView.class);
             return;
         }
         
-        // Cargar usuario de la base de datos
-        var usuarioOpt = usuarioRepository.findByNombre(nombreUsuario);
-        if (usuarioOpt.isEmpty()) {
-            mostrarError("Usuario no encontrado en la base de datos");
-            return;
-        }
-        
-        this.usuarioActual = usuarioOpt.get();
-        construirVista();
+        usuarioRepository.findByNombre(nombreUsuario).ifPresentOrElse(u -> {
+            this.usuarioActual = u;
+            construirVista();
+            configurarBinder();
+        }, () -> mostrarError("Usuario no encontrado"));
+    }
+    
+    private void configurarBinder() {
+        // Vinculamos los campos
+        binder.forField(nombre)
+            .asRequired("El nombre es obligatorio")
+            .bind(Usuario::getNombre, Usuario::setNombre);
+
+        binder.forField(email)
+            .asRequired("El email es obligatorio")
+            .withValidator(new com.vaadin.flow.data.validator.EmailValidator("Email no válido"))
+            .bind(Usuario::getEmail, Usuario::setEmail);
+
+        // La contraseña es especial: solo se encripta y guarda si el usuario escribe algo
+        binder.forField(password)
+            .withValidator(p -> p.isEmpty() || p.length() >= 6, "La contraseña debe tener al menos 6 caracteres")
+            .bind(u -> "", (u, p) -> {
+                if (!p.isEmpty()) {
+                    u.setContrasena(passwordEncoder.encode(p));
+                }
+            });
+
+        // Cargamos los datos actuales del objeto al formulario
+        binder.readBean(usuarioActual);
     }
     
     private void construirVista() {
         addClassName("perfil-view");
         setSizeFull();
-        setJustifyContentMode(JustifyContentMode.CENTER);
         setAlignItems(Alignment.CENTER);
+        setJustifyContentMode(JustifyContentMode.CENTER);
 
-        // --- TARJETA DE PERFIL (CARD) ---
         VerticalLayout card = new VerticalLayout();
         card.addClassNames("perfil-card", "perfil-card-content"); 
-        card.setWidthFull();
-        card.setMaxWidth("800px"); 
-        card.setPadding(false);
-        card.setSpacing(false);
+        card.setMaxWidth("600px");
+        card.setPadding(true);
 
-        // --- ENCABEZADO ---
-        HorizontalLayout header = createHeader();
-        header.addClassName("perfil-header");
+        // --- ENCABEZADO CON AVATAR ---
+        HorizontalLayout header = new HorizontalLayout();
+        header.setAlignItems(Alignment.CENTER);
+        Avatar avatar = new Avatar(usuarioActual.getNombre());
+        avatar.setWidth("60px");
+        avatar.setHeight("60px");
+        
+        VerticalLayout titleLayout = new VerticalLayout(new H2("Mi Perfil"), new Paragraph("Rol: " + usuarioActual.getRol()));
+        titleLayout.setPadding(false);
+        titleLayout.setSpacing(false);
+        header.add(avatar, titleLayout);
 
         // --- FORMULARIO ---
         FormLayout formLayout = new FormLayout();
-        formLayout.addClassName("perfil-form");
-        formLayout.setWidthFull();
-
-        nombre = new TextField("Nombre");
         nombre.setPrefixComponent(new Icon(VaadinIcon.USER));
-        nombre.setValue(usuarioActual.getNombre());
-
-        apellidos = new TextField("Apellidos");
-        apellidos.setPlaceholder("Añade tus apellidos");
-        apellidos.setValue(""); 
-
-        email = new EmailField("Correo Electrónico");
         email.setPrefixComponent(new Icon(VaadinIcon.ENVELOPE));
-        email.setValue(usuarioActual.getEmail());
+        password.setPrefixComponent(new Icon(VaadinIcon.KEY));
 
-        // Organización del Layout
-        formLayout.add(nombre, apellidos, email);
-        formLayout.setResponsiveSteps(
-                new FormLayout.ResponsiveStep("0", 1),
-                new FormLayout.ResponsiveStep("600px", 2)
-        );
+        formLayout.add(nombre, email, password);
+        formLayout.setColspan(nombre, 1);
+        formLayout.setColspan(email, 1);
+        formLayout.setColspan(password, 2);
 
-        // Configuración de columnas (El email ocupa toda la fila)
-        formLayout.setColspan(email, 2);
-
-        // --- BOTONES DE ACCIÓN ---
-        Button guardar = new Button("Guardar Cambios", new Icon(VaadinIcon.CHECK));
+        // --- ACCIONES ---
+        Button guardar = new Button("Actualizar Datos", new Icon(VaadinIcon.CHECK));
         guardar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         guardar.addClickListener(e -> guardarCambios());
 
         Button cancelar = new Button("Cancelar");
-        cancelar.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        cancelar.addClickListener(e -> recargarDatos());
+        cancelar.addClickListener(e -> UI.getCurrent().navigate(HomeView.class));
 
-        HorizontalLayout actions = new HorizontalLayout(guardar, cancelar);
+        HorizontalLayout actions = new HorizontalLayout(cancelar, guardar);
         actions.setWidthFull();
         actions.setJustifyContentMode(JustifyContentMode.END);
-        actions.setSpacing(true);
 
         card.add(header, formLayout, actions);
         add(card);
     }
 
     private void guardarCambios() {
-        try {
-            if (nombre.getValue().trim().isEmpty()) {
-                mostrarError("El nombre no puede estar vacío");
-                return;
+        // El rol no se toca porque no está bindeado a ningún campo del formulario
+        if (binder.writeBeanIfValid(usuarioActual)) {
+            try {
+                usuarioRepository.save(usuarioActual);
+                
+                // Actualizamos la sesión por si cambió el nombre
+                VaadinSession.getCurrent().setAttribute("userName", usuarioActual.getNombre());
+                
+                Notification.show("Perfil actualizado con éxito")
+                        .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                
+                // Limpiar campo password después de guardar
+                password.clear();
+            } catch (Exception ex) {
+                mostrarError("Error: El nombre o email ya están en uso.");
             }
-            if (!email.getValue().contains("@")) {
-                mostrarError("Email inválido");
-                return;
-            }
-            
-            usuarioActual.setNombre(nombre.getValue().trim());
-            usuarioActual.setEmail(email.getValue().trim());
-            
-            usuarioRepository.save(usuarioActual);
-            VaadinSession.getCurrent().setAttribute("userName", usuarioActual.getNombre());
-            
-            mostrarExito("Perfil actualizado correctamente");
-        } catch (Exception ex) {
-            mostrarError("Error al guardar: " + ex.getMessage());
+        } else {
+            mostrarError("Por favor, revise los errores en el formulario");
         }
     }
     
-    private void recargarDatos() {
-        nombre.setValue(usuarioActual.getNombre());
-        email.setValue(usuarioActual.getEmail());
-        apellidos.clear();
-        mostrarInfo("Cambios cancelados");
-    }
-    
-    private void mostrarExito(String mensaje) {
-        Notification n = Notification.show(mensaje);
-        n.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-    }
-    
     private void mostrarError(String mensaje) {
-        Notification n = Notification.show("❌ " + mensaje);
-        n.addThemeVariants(NotificationVariant.LUMO_ERROR);
-    }
-    
-    private void mostrarInfo(String mensaje) {
-        Notification.show("ℹ️ " + mensaje);
-    }
-
-    private HorizontalLayout createHeader() {
-        HorizontalLayout header = new HorizontalLayout();
-        header.setWidthFull();
-        header.setAlignItems(Alignment.CENTER);
-        header.setSpacing(true);
-
-        Avatar avatar = new Avatar(usuarioActual.getNombre());
-        avatar.setWidth("80px");
-        avatar.setHeight("80px");
-        avatar.getStyle().set("border", "2px solid var(--lumo-primary-color-10pct)");
-
-        VerticalLayout textContainer = new VerticalLayout();
-        textContainer.setPadding(false);
-        textContainer.setSpacing(false);
-
-        H2 title = new H2("Configuración de Perfil");
-        title.getStyle().set("margin", "0");
-        title.getStyle().set("font-size", "1.5rem");
-        
-        Paragraph subtitle = new Paragraph("Sesión activa: " + usuarioActual.getNombre());
-        subtitle.getStyle().set("color", "var(--lumo-secondary-text-color)");
-        subtitle.getStyle().set("margin", "0");
-
-        textContainer.add(title, subtitle);
-        header.add(avatar, textContainer);
-
-        return header;
+        Notification.show(mensaje).addThemeVariants(NotificationVariant.LUMO_ERROR);
     }
 }

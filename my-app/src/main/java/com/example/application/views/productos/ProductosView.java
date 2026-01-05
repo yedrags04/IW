@@ -23,6 +23,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility.*;
 import java.util.List;
+import org.springframework.data.domain.Sort; // Importante para el ordenamiento
 import org.vaadin.lineawesome.LineAwesomeIconUrl;
 
 @PageTitle("productos")
@@ -33,29 +34,20 @@ public class ProductosView extends Main implements HasComponents, HasStyle {
     private OrderedList imageContainer;
     private final ProductoRepository productoRepository;
     private final ShoppingCartService cartService;
-    private final AuthService authService; // Añadido
+    private final AuthService authService;
 
     public ProductosView(ProductoRepository productoRepository, ShoppingCartService cartService, AuthService authService) {
         this.productoRepository = productoRepository;
         this.cartService = cartService;
-        this.authService = authService; // Inicializado
+        this.authService = authService;
 
-        // Ajustes de margen superior
         getElement().getStyle().set("margin-top", "var(--lumo-size-xl)");
         getElement().getStyle().set("display", "block");
 
         constructUI();
-        cargarProductos();
+        // Cargamos inicialmente por defecto (ID descendente suele ser "más nuevos")
+        cargarProductos(Sort.by(Sort.Direction.DESC, "id")); 
         addAdminAddProductButton(); 
-    }
-
-    private void cargarProductos() {
-        List<Producto> productos = productoRepository.findAll();
-        imageContainer.removeAll();
-// Dentro del bucle for en ProductosView
-for (Producto p : productos) {
-    imageContainer.add(new ProductosViewCard(p, cartService, authService, productoRepository));
-}
     }
 
     private void constructUI() {
@@ -76,10 +68,24 @@ for (Producto p : productos) {
         description.addClassNames(Margin.Bottom.XLARGE, Margin.Top.NONE, TextColor.SECONDARY);
         headerContainer.add(header, description);
 
+        // --- SELECT DE ORDENACIÓN REAL ---
         Select<String> sortBy = new Select<>();
         sortBy.setLabel("Ordenar por");
-        sortBy.setItems("Popularidad", "Más nuevos", "Precio");
-        sortBy.setValue("Popularidad");
+        sortBy.setItems("Más nuevos", "Precio: Menor a Mayor", "Precio: Mayor a Menor", "Nombre");
+        sortBy.setValue("Más nuevos");
+
+        sortBy.addValueChangeListener(event -> {
+            String valor = event.getValue();
+            if ("Precio: Menor a Mayor".equals(valor)) {
+                cargarProductos(Sort.by(Sort.Direction.ASC, "precio"));
+            } else if ("Precio: Mayor a Menor".equals(valor)) {
+                cargarProductos(Sort.by(Sort.Direction.DESC, "precio"));
+            } else if ("Nombre".equals(valor)) {
+                cargarProductos(Sort.by(Sort.Direction.ASC, "nombre"));
+            } else {
+                cargarProductos(Sort.by(Sort.Direction.DESC, "id"));
+            }
+        });
 
         imageContainer = new OrderedList();
         imageContainer.addClassNames(Gap.MEDIUM, Display.GRID, ListStyleType.NONE, Margin.NONE, Padding.NONE);
@@ -88,15 +94,19 @@ for (Producto p : productos) {
         add(container, imageContainer);
     }
 
-    private void addAdminAddProductButton() {
-        // Usamos el método isAdmin() que ya definiste en tu AuthService
-        if (authService.isAdmin()) {
-            System.out.println("DEBUG: El usuario es ADMIN. Generando botón...");
+    private void cargarProductos(Sort sortOrder) {
+        // Usamos el método findAll que acepta un objeto Sort de Spring Data
+        List<Producto> productos = productoRepository.findAll(sortOrder);
+        imageContainer.removeAll();
+        for (Producto p : productos) {
+            imageContainer.add(new ProductosViewCard(p, cartService, authService, productoRepository));
+        }
+    }
 
+    private void addAdminAddProductButton() {
+        if (authService.isAdmin()) {
             Button addProductBtn = new Button("Añadir", new Icon(VaadinIcon.PLUS));
             addProductBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
-
-            // Posicionamiento fijo abajo a la derecha
             addProductBtn.getStyle()
                 .set("position", "fixed")
                 .set("bottom", "20px")
@@ -106,10 +116,7 @@ for (Producto p : productos) {
                 .set("box-shadow", "0 4px 12px rgba(0, 0, 0, 0.4)");
 
             addProductBtn.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("add-product")));
-
             add(addProductBtn);
-        } else {
-            System.out.println("DEBUG: Botón oculto. isAdmin() devolvió false.");
         }
     }
 }
