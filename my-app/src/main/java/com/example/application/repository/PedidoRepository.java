@@ -6,6 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PedidoRepository extends JpaRepository<Pedido, Long> {
-    // Aquí puedes añadir métodos personalizados si los necesitas, ej:
-    // List<Pedido> findByEstado(String estado);
+    // Spring Data JPA generará la consulta automáticamente
+    long countByEstado(String estado);
 }

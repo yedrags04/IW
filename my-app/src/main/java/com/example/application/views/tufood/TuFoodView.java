@@ -29,13 +29,14 @@ public class TuFoodView extends Composite<VerticalLayout> {
 
     private final OrderService orderService;
     private final Grid<Pedido> grid = new Grid<>(Pedido.class, false);
+    
     private final Span txtNuevos = new Span("0");
-    private final Span txtCocina = new Span("0");
+    private final Span txtPreparacion = new Span("0");
     private final Span txtListos = new Span("0");
+    private final Span txtEntregados = new Span("0");
 
     public TuFoodView(AuthService authService, OrderService orderService) {
         this.orderService = orderService;
-
         VerticalLayout root = getContent();
         
         if (!authService.isAdmin()) {
@@ -45,89 +46,101 @@ public class TuFoodView extends Composite<VerticalLayout> {
             return;
         }
 
+        // --- CORRECCIÓN DE DISEÑO Y SUPERPOSICIÓN ---
         root.setSizeFull();
         root.setPadding(false);
+        root.setSpacing(false);
+        // Estas dos líneas evitan que el contenido "empuje" al menú lateral
+        root.getStyle().set("min-width", "0");
+        root.getStyle().set("overflow", "hidden"); 
         root.getStyle().set("background-color", "var(--lumo-contrast-5pct)");
 
+        // Contenedor con scroll interno para que el Grid no rompa el layout
+        VerticalLayout scrollContainer = new VerticalLayout();
+        scrollContainer.setSizeFull();
+        scrollContainer.getStyle().set("overflow-y", "auto");
+        scrollContainer.getStyle().set("min-width", "0");
+        
         VerticalLayout content = new VerticalLayout();
         content.setMaxWidth("1200px");
+        content.setWidthFull(); // Importante para que el Grid sepa su ancho
         content.addClassNames(LumoUtility.Margin.Horizontal.AUTO, LumoUtility.Padding.MEDIUM);
 
-        // ENCABEZADO
+        // CABECERA
         H1 title = new H1("Gestión de Operaciones");
         title.addClassNames(LumoUtility.FontSize.XXLARGE, LumoUtility.Margin.NONE);
-        
         Button btnRefresh = new Button(VaadinIcon.REFRESH.create(), e -> actualizarTodo());
         btnRefresh.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
-        HorizontalLayout header = new HorizontalLayout(new VerticalLayout(title, new Span("Pedidos en tiempo real")), btnRefresh);
+        HorizontalLayout header = new HorizontalLayout(new VerticalLayout(title, new Span("Panel de control dinámico")), btnRefresh);
         header.setWidthFull();
         header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
 
         // ESTADÍSTICAS
         HorizontalLayout stats = new HorizontalLayout(
             createStatCard("Nuevos", txtNuevos, VaadinIcon.BELL, "var(--lumo-error-color)"),
-            createStatCard("En Cocina", txtCocina, VaadinIcon.FIRE, "var(--lumo-warning-color)"),
-            createStatCard("Listos", txtListos, VaadinIcon.PACKAGE, "var(--lumo-success-color)")
+            createStatCard("En Preparación", txtPreparacion, VaadinIcon.FIRE, "var(--lumo-warning-color)"),
+            createStatCard("Listos", txtListos, VaadinIcon.PACKAGE, "var(--lumo-success-color)"),
+            createStatCard("Entregados", txtEntregados, VaadinIcon.CHECK_CIRCLE, "var(--lumo-contrast-50pct)")
         );
         stats.setWidthFull();
 
-        // GRID
         configureGrid();
 
         content.add(header, stats, new H3("Cola de Trabajo"), grid);
-        root.add(content);
+        scrollContainer.add(content);
+        root.add(scrollContainer);
 
         actualizarTodo(); 
     }
 
-private void configureGrid() {
-    // 1. Limpiamos cualquier configuración previa de columnas
-    grid.removeAllColumns();
-
-    // 2. Definimos las columnas manualmente (Evita errores de tipos automáticos)
-    grid.addColumn(Pedido::getTicketId)
-        .setHeader("ID Ticket")
-        .setKey("ticketId") // Asignamos una clave string interna
-        .setAutoWidth(true);
-
-    grid.addColumn(Pedido::getCliente)
-        .setHeader("Cliente")
-        .setAutoWidth(true);
-
-    grid.addColumn(Pedido::getTipo)
-        .setHeader("Tipo")
-        .setAutoWidth(true);
-
-    grid.addComponentColumn(this::createStatusBadge)
-        .setHeader("Estado")
-        .setAutoWidth(true);
+    private void configureGrid() {
+        grid.removeAllColumns();
+        // Hacemos que el Grid sea flexible para que use scroll horizontal si el menú lateral le quita espacio
+        grid.setWidthFull();
+        
+        grid.addColumn(Pedido::getTicketId).setHeader("ID Ticket").setAutoWidth(true);
+        grid.addColumn(Pedido::getCliente).setHeader("Cliente").setAutoWidth(true);
+        grid.addColumn(Pedido::getTipo).setHeader("Tipo").setAutoWidth(true);
+        grid.addComponentColumn(this::createStatusBadge).setHeader("Estado").setAutoWidth(true);
     
-    grid.addComponentColumn(pedido -> {
-        String etiqueta = pedido.getEstado().equals("NUEVO") ? "Cocinar" : "Finalizar";
-        Button btn = new Button(etiqueta, VaadinIcon.ARROW_RIGHT.create());
-        btn.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
-        
-        btn.addClickListener(e -> {
-            // Aquí usamos el Long sin problemas porque es lógica Java pura
-            orderService.actualizarEstado(pedido.getId_db());
-            actualizarTodo();
-        });
-        
-        btn.setEnabled(!pedido.getEstado().equals("LISTO"));
-        return btn;
-    }).setHeader("Acción").setAutoWidth(true);
+        grid.addComponentColumn(pedido -> {
+            String estado = pedido.getEstado().toUpperCase();
+            String etiqueta;
+            VaadinIcon icono = VaadinIcon.ARROW_RIGHT;
+            boolean visible = true;
 
-    // 3. Estilo y comportamiento
-    grid.addThemeVariants(GridVariant.LUMO_NO_BORDER, GridVariant.LUMO_ROW_STRIPES);
-    grid.addClassNames(LumoUtility.Background.BASE, LumoUtility.BorderRadius.LARGE, LumoUtility.BoxShadow.SMALL);
-    grid.setAllRowsVisible(true);
-}
+            switch (estado) {
+                case "NUEVO" -> etiqueta = "Preparar";
+                case "EN PREPARACION" -> etiqueta = "Listo";
+                case "LISTO" -> etiqueta = "Entregar";
+                default -> {
+                    etiqueta = "Finalizado";
+                    icono = VaadinIcon.CHECK;
+                    visible = false;
+                }
+            }
+
+            Button btn = new Button(etiqueta, icono.create());
+            btn.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
+            btn.setVisible(visible);
+            btn.addClickListener(e -> {
+                orderService.actualizarEstado(pedido.getId_db());
+                actualizarTodo();
+            });
+            return btn;
+        }).setHeader("Acción").setAutoWidth(true);
+
+        grid.addThemeVariants(GridVariant.LUMO_NO_BORDER, GridVariant.LUMO_ROW_STRIPES);
+        grid.addClassNames(LumoUtility.Background.BASE, LumoUtility.BorderRadius.LARGE, LumoUtility.BoxShadow.SMALL);
+    }
+
     private void actualizarTodo() {
         grid.setItems(orderService.getTodosLosPedidos());
         txtNuevos.setText(String.valueOf(orderService.contarPorEstado("NUEVO")));
-        txtCocina.setText(String.valueOf(orderService.contarPorEstado("COCINANDO")));
+        txtPreparacion.setText(String.valueOf(orderService.contarPorEstado("EN PREPARACION")));
         txtListos.setText(String.valueOf(orderService.contarPorEstado("LISTO")));
+        txtEntregados.setText(String.valueOf(orderService.contarPorEstado("ENTREGADO")));
     }
 
     private Component createStatCard(String title, Span valueSpan, VaadinIcon icon, String color) {
@@ -138,9 +151,8 @@ private void configureGrid() {
 
         Icon i = icon.create();
         i.getStyle().set("color", color);
-        i.addClassNames(LumoUtility.Padding.SMALL, "contrast-5", LumoUtility.BorderRadius.MEDIUM);
-
         valueSpan.addClassNames(LumoUtility.FontSize.XXLARGE, LumoUtility.FontWeight.BOLD);
+        
         VerticalLayout info = new VerticalLayout(new Span(title), valueSpan);
         info.setPadding(false); info.setSpacing(false);
 
@@ -149,11 +161,16 @@ private void configureGrid() {
     }
 
     private Span createStatusBadge(Pedido p) {
-        Span badge = new Span(p.getEstado());
+        String estado = p.getEstado().toUpperCase();
+        Span badge = new Span(estado);
         badge.getElement().getThemeList().add("badge pill");
-        if (p.getEstado().equals("NUEVO")) badge.getElement().getThemeList().add("error");
-        else if (p.getEstado().equals("COCINANDO")) badge.getElement().getThemeList().add("warning");
-        else badge.getElement().getThemeList().add("success");
+        
+        switch (estado) {
+            case "NUEVO" -> badge.getElement().getThemeList().add("error");
+            case "EN PREPARACION" -> badge.getElement().getThemeList().add("warning");
+            case "LISTO" -> badge.getElement().getThemeList().add("success");
+            default -> badge.getStyle().set("background-color", "var(--lumo-contrast-20pct)");
+        }
         return badge;
     }
 }

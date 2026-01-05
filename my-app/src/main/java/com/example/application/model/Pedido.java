@@ -23,14 +23,14 @@ public class Pedido {
     // Constructor vacío obligatorio para JPA
     public Pedido() {}
 
-    public Pedido(String ticketId, String cliente, String tipo, String direccion) {
-        this.ticketId = ticketId;
-        this.cliente = cliente;
-        this.tipo = tipo;
-        this.direccion = direccion;
-        this.estado = "NUEVO";
-        this.fecha = LocalDateTime.now();
-    }
+public Pedido(String ticketId, String cliente, String tipo, String direccion) {
+    this.ticketId = ticketId;
+    this.cliente = cliente;
+    this.tipo = tipo;
+    this.direccion = direccion;
+    this.estado = "NUEVO"; // Estado inicial unificado
+    this.fecha = LocalDateTime.now();
+}
 
     // Getters y Setters
     public Long getId_db() { return id_db; }

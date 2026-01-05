@@ -16,6 +16,7 @@ import com.vaadin.flow.component.html.OrderedList;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
@@ -43,13 +44,16 @@ public class ProductosView extends Main implements HasComponents, HasStyle, HasU
         this.cartService = cartService;
         this.authService = authService;
 
+        // Ajuste para evitar que el banner oculte el título
+        getStyle().set("margin-top", "80px"); 
+        getStyle().set("display", "block");
+
         constructUI();
         addAdminAddProductButton(); 
     }
 
     @Override
     public void setParameter(BeforeEvent event, @OptionalParameter String parameter) {
-        // Leemos el parámetro ?categoria=...
         List<String> categoriaParams = event.getLocation().getQueryParameters().getParameters().get("categoria");
         
         if (categoriaParams != null && !categoriaParams.isEmpty()) {
@@ -63,37 +67,52 @@ public class ProductosView extends Main implements HasComponents, HasStyle, HasU
     }
 
     private void constructUI() {
-        addClassNames("productos-view", MaxWidth.SCREEN_LARGE, Margin.Horizontal.AUTO, 
-                     Padding.Bottom.LARGE, Padding.Horizontal.LARGE, Padding.Top.LARGE);
+        addClassNames("productos-view", MaxWidth.SCREEN_MEDIUM, Margin.Horizontal.AUTO, 
+                     Padding.Bottom.LARGE, Padding.Horizontal.LARGE, Padding.Top.XLARGE);
 
-        HorizontalLayout container = new HorizontalLayout();
-        container.addClassNames(AlignItems.CENTER, JustifyContent.BETWEEN);
-
+        // --- CABECERA CENTRADA ---
         VerticalLayout headerContainer = new VerticalLayout();
         headerContainer.setPadding(false);
+        headerContainer.setAlignItems(FlexComponent.Alignment.CENTER); 
+        headerContainer.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
         
         headerTitle = new H2("Nuestros Productos");
         headerTitle.addClassNames(Margin.Bottom.NONE, Margin.Top.NONE, FontSize.XXXLARGE);
         
         Paragraph description = new Paragraph("Selecciona tus platos favoritos.");
+        description.addClassNames(Margin.Bottom.MEDIUM, Margin.Top.NONE, TextColor.SECONDARY);
         headerContainer.add(headerTitle, description);
 
-        // SELECT DE ORDENACIÓN
+        // --- FILTROS ALINEADOS A LA DERECHA ---
+        HorizontalLayout filterLayout = new HorizontalLayout();
+        filterLayout.setWidthFull();
+        filterLayout.setAlignItems(FlexComponent.Alignment.BASELINE);
+        // CAMBIO AQUÍ: Alineamos el contenido al final (derecha)
+        filterLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+        filterLayout.addClassNames(Margin.Bottom.LARGE);
+
         Select<String> sortBy = new Select<>();
         sortBy.setLabel("Ordenar por");
         sortBy.setItems("Más nuevos", "Precio: Bajo a Alto", "Precio: Alto a Bajo");
         sortBy.setValue("Más nuevos");
         sortBy.addValueChangeListener(e -> aplicarOrden(e.getValue()));
 
-        // BOTÓN LIMPIAR FILTROS (Solo visible si hay filtro)
         Button clearFilter = new Button("Ver todo", e -> UI.getCurrent().navigate(ProductosView.class));
         clearFilter.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        
+        filterLayout.add(clearFilter, sortBy);
 
+        // --- GRID DE PRODUCTOS ---
         imageContainer = new OrderedList();
-        imageContainer.addClassNames(Gap.MEDIUM, Display.GRID, ListStyleType.NONE, Margin.NONE, Padding.NONE);
+        imageContainer.addClassNames(Gap.LARGE, Display.GRID, ListStyleType.NONE, Margin.NONE, Padding.NONE);
+        
+        imageContainer.getStyle()
+            .set("grid-template-columns", "repeat(auto-fit, minmax(280px, 320px))")
+            .set("justify-content", "center")
+            .set("max-width", "1100px")
+            .set("margin", "0 auto");
 
-        container.add(headerContainer, new HorizontalLayout(clearFilter, sortBy));
-        add(container, imageContainer);
+        add(headerContainer, filterLayout, imageContainer);
     }
 
     private void aplicarOrden(String criterio) {
@@ -118,7 +137,16 @@ public class ProductosView extends Main implements HasComponents, HasStyle, HasU
         if (authService.isAdmin()) {
             Button addProductBtn = new Button(new Icon(VaadinIcon.PLUS));
             addProductBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
-            addProductBtn.getStyle().set("position", "fixed").set("bottom", "20px").set("right", "20px").set("z-index", "1000");
+            addProductBtn.getStyle()
+                .set("position", "fixed")
+                .set("bottom", "30px")
+                .set("right", "30px")
+                .set("z-index", "1000")
+                .set("border-radius", "50%")
+                .set("width", "60px")
+                .set("height", "60px")
+                .set("box-shadow", "0 4px 12px rgba(0, 0, 0, 0.3)");
+            
             addProductBtn.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("add-product")));
             add(addProductBtn);
         }
