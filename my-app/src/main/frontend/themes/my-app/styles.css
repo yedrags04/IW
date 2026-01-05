@@ -4,10 +4,15 @@
 @import url('./views/productos-view.css');
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
 
+* {
+    box-sizing: border-box; /* Fundamental para que el padding no cree scroll horizontal */
+}
+
 body {
     height: 100vh;
     margin: 0;
     padding: 0;
+    overflow-x: hidden;
 }
 
 html {
@@ -496,3 +501,69 @@ header vaadin-button[theme~="error"]:hover {
     .category-container { flex-wrap: wrap; }
     .product-grid { flex-direction: column; align-items: center; }
 }
+
+/* --- VISTA DE ESTADÍSTICAS --- */
+.estadisticas-view {
+    padding: 80px 20px 40px 20px !important; 
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+    /* Quitamos cualquier restricción de altura */
+    height: auto !important; 
+    min-height: 0 !important;
+}
+
+.estadisticas-view h2:first-child {
+    margin-top: 10px;
+    margin-bottom: 5px;
+}
+
+.kpi-layout-container { /* Asegúrate de que el layout de las tarjetas no desborde */
+    max-width: 100%;
+    overflow: visible;
+}
+
+.stat-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: var(--lumo-border-radius-l);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    min-width: 250px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-top: 5px solid var(--lumo-contrast-20pct);
+}
+
+.stat-card vaadin-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: var(--lumo-primary-color);
+}
+
+.stat-card span {
+    font-size: var(--lumo-font-size-s);
+    color: var(--lumo-secondary-text-color);
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.stat-card h2 {
+    margin: 0.5rem 0 0 0;
+    color: var(--lumo-body-text-color);
+}
+
+/* Temas de colores para las tarjetas */
+.stat-card.success { border-top-color: #2ecc71; }
+.stat-card.info { border-top-color: #3498db; }
+.stat-card.warning { border-top-color: #f1c40f; }
+
+/* Tabla de estadísticas */
+.stats-grid {
+    border-radius: var(--lumo-border-radius-m);
+    box-shadow: var(--lumo-box-shadow-xs);
+    margin-top: 1rem;
+    /* Forzamos que la altura sea la del contenido */
+    height: auto !important;
+}
+
