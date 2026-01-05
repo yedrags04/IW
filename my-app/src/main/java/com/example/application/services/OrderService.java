@@ -2,10 +2,11 @@ package com.example.application.services;
 
 import com.example.application.model.Pedido;
 import com.example.application.repository.PedidoRepository;
-import org.springframework.beans.factory.annotation.Autowired; // Necesario
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional; // Necesario
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
+import org.springframework.data.domain.Sort;
 
 @Service
 public class OrderService {
@@ -33,9 +34,19 @@ public class OrderService {
         });
     }
 
-    public List<Pedido> getTodosLosPedidos() {
-        // Podrías devolverlos ordenados por fecha para una "Toma de Pedidos Ágil" [cite: 48]
-        return pedidoRepository.findAll();
+    @Transactional
+    public Pedido registrarPedido(Pedido nuevoPedido) {
+        if (nuevoPedido.getEstado() == null) {
+            nuevoPedido.setEstado("NUEVO");
+        }
+        if (nuevoPedido.getFecha() == null) {
+            nuevoPedido.setFecha(java.time.LocalDateTime.now());
+        }
+        return pedidoRepository.save(nuevoPedido);
+    }
+
+public List<Pedido> getTodosLosPedidos() {
+        return pedidoRepository.findAll(Sort.by(Sort.Direction.ASC, "fecha"));
     }
 
     public long contarPorEstado(String estado) {

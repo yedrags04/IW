@@ -46,16 +46,13 @@ public class TuFoodView extends Composite<VerticalLayout> {
             return;
         }
 
-        // --- CORRECCIÓN DE DISEÑO Y SUPERPOSICIÓN ---
         root.setSizeFull();
         root.setPadding(false);
         root.setSpacing(false);
-        // Estas dos líneas evitan que el contenido "empuje" al menú lateral
         root.getStyle().set("min-width", "0");
         root.getStyle().set("overflow", "hidden"); 
         root.getStyle().set("background-color", "var(--lumo-contrast-5pct)");
 
-        // Contenedor con scroll interno para que el Grid no rompa el layout
         VerticalLayout scrollContainer = new VerticalLayout();
         scrollContainer.setSizeFull();
         scrollContainer.getStyle().set("overflow-y", "auto");
@@ -63,10 +60,9 @@ public class TuFoodView extends Composite<VerticalLayout> {
         
         VerticalLayout content = new VerticalLayout();
         content.setMaxWidth("1200px");
-        content.setWidthFull(); // Importante para que el Grid sepa su ancho
+        content.setWidthFull();
         content.addClassNames(LumoUtility.Margin.Horizontal.AUTO, LumoUtility.Padding.MEDIUM);
 
-        // CABECERA
         H1 title = new H1("Gestión de Operaciones");
         title.addClassNames(LumoUtility.FontSize.XXLARGE, LumoUtility.Margin.NONE);
         Button btnRefresh = new Button(VaadinIcon.REFRESH.create(), e -> actualizarTodo());
@@ -76,7 +72,6 @@ public class TuFoodView extends Composite<VerticalLayout> {
         header.setWidthFull();
         header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
 
-        // ESTADÍSTICAS
         HorizontalLayout stats = new HorizontalLayout(
             createStatCard("Nuevos", txtNuevos, VaadinIcon.BELL, "var(--lumo-error-color)"),
             createStatCard("En Preparación", txtPreparacion, VaadinIcon.FIRE, "var(--lumo-warning-color)"),
@@ -96,9 +91,13 @@ public class TuFoodView extends Composite<VerticalLayout> {
 
     private void configureGrid() {
         grid.removeAllColumns();
-        // Hacemos que el Grid sea flexible para que use scroll horizontal si el menú lateral le quita espacio
         grid.setWidthFull();
         
+        grid.addColumn(pedido -> {
+        return pedido.getFecha() != null ? 
+               pedido.getFecha().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss")) : "";
+    }).setHeader("Hora").setAutoWidth(true);
+
         grid.addColumn(Pedido::getTicketId).setHeader("ID Ticket").setAutoWidth(true);
         grid.addColumn(Pedido::getCliente).setHeader("Cliente").setAutoWidth(true);
         grid.addColumn(Pedido::getTipo).setHeader("Tipo").setAutoWidth(true);
@@ -130,6 +129,7 @@ public class TuFoodView extends Composite<VerticalLayout> {
             });
             return btn;
         }).setHeader("Acción").setAutoWidth(true);
+        grid.addThemeVariants(GridVariant.LUMO_NO_BORDER, GridVariant.LUMO_ROW_STRIPES);
 
         grid.addThemeVariants(GridVariant.LUMO_NO_BORDER, GridVariant.LUMO_ROW_STRIPES);
         grid.addClassNames(LumoUtility.Background.BASE, LumoUtility.BorderRadius.LARGE, LumoUtility.BoxShadow.SMALL);
