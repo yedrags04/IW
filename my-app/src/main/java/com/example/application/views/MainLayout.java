@@ -6,6 +6,7 @@ import com.example.application.views.productos.ProductosView;
 import com.example.application.views.productos.AddProductView;
 import com.example.application.views.tufood.TuFoodView;
 import com.example.application.views.perfil.PerfilView;
+import com.example.application.views.dardealta.AdminUserRegistrationView;
 import com.example.application.views.estadisticas.EstadisticasView;
 import com.example.application.views.login.LoginFlipView;
 import com.vaadin.flow.component.UI;
@@ -123,6 +124,7 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
             nav.addItem(new SideNavItem("Gestión Pedidos", TuFoodView.class, LineAwesomeIcon.UTENSILS_SOLID.create()));
             nav.addItem(new SideNavItem("Añadir Producto", AddProductView.class, LineAwesomeIcon.PLUS_CIRCLE_SOLID.create()));
             nav.addItem(new SideNavItem("Estadísticas", EstadisticasView.class, LineAwesomeIcon.CHART_BAR_SOLID.create()));
+            nav.addItem(new SideNavItem("Alta Usuarios", AdminUserRegistrationView.class, VaadinIcon.PLUS.create()));
         }
 
         return nav;

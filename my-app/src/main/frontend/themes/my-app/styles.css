@@ -567,3 +567,16 @@ header vaadin-button[theme~="error"]:hover {
     height: auto !important;
 }
 
+
+/* Ajuste específico para el formulario de alta */
+.admin-registration-view {
+    background-color: var(--lumo-contrast-5pct);
+    padding-top: 60px; /* Para que no se pegue al header */
+}
+
+.admin-registration-view .perfil-title {
+    border-bottom: 2px solid var(--lumo-primary-color-10pct);
+    width: 100%;
+    padding-bottom: 10px;
+    color: var(--lumo-primary-color);
+}
