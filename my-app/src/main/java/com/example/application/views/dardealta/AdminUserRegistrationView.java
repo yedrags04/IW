@@ -1,6 +1,10 @@
 package com.example.application.views.dardealta;
 
+import com.example.application.model.Usuario;
+import com.example.application.repository.UsuarioRepository;
 import com.example.application.views.MainLayout;
+import com.example.application.views.main.HomeView;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.formlayout.FormLayout;
@@ -16,16 +20,28 @@ import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.binder.BeanValidationBinder;
+import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.RolesAllowed;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @PageTitle("Alta de Usuarios | Tu Food")
 @Route(value = "alta-usuarios", layout = MainLayout.class)
-@RolesAllowed("ADMIN") // Solo accesible por administradores
+@RolesAllowed("ADMIN")
 public class AdminUserRegistrationView extends VerticalLayout {
 
-    public AdminUserRegistrationView() {
+    private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final Binder<Usuario> binder = new BeanValidationBinder<>(Usuario.class);
+
+    @Autowired
+    public AdminUserRegistrationView(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
+        this.usuarioRepository = usuarioRepository;
+        this.passwordEncoder = passwordEncoder;
+
         addClassName("admin-registration-view");
         setSizeFull();
         setAlignItems(Alignment.CENTER);
@@ -34,8 +50,9 @@ public class AdminUserRegistrationView extends VerticalLayout {
         // --- TARJETA CONTENEDORA ---
         VerticalLayout card = new VerticalLayout();
         card.addClassNames("perfil-card", "perfil-card-content");
-        card.setMaxWidth("600px");
+        card.setMaxWidth("550px"); // Reducido un poco para mayor estética
         card.setPadding(true);
+        card.setSpacing(true);
 
         // Encabezado
         H2 title = new H2("Registrar Nuevo Usuario");
@@ -45,63 +62,95 @@ public class AdminUserRegistrationView extends VerticalLayout {
         // --- FORMULARIO ---
         FormLayout formLayout = new FormLayout();
 
-        TextField nombre = new TextField("Nombre");
+        TextField nombre = new TextField("Nombre de Usuario");
         nombre.setPrefixComponent(new Icon(VaadinIcon.USER));
-        nombre.setRequired(true);
 
         TextField apellido = new TextField("Apellido");
-        apellido.setRequired(true);
+        apellido.setRequiredIndicatorVisible(true);
 
         EmailField email = new EmailField("Correo Electrónico");
         email.setPrefixComponent(new Icon(VaadinIcon.ENVELOPE));
-        email.setRequired(true);
 
         PasswordField password = new PasswordField("Contraseña");
         password.setPrefixComponent(new Icon(VaadinIcon.KEY));
-        password.setRequired(true);
 
         Select<String> rol = new Select<>();
         rol.setLabel("Rol del Usuario");
-        rol.setItems("Trabajador", "Cliente");
+        rol.setItems("TRABAJADOR", "CLIENTE", "ADMIN");
         rol.setPlaceholder("Seleccione un rol");
-        rol.setRequiredIndicatorVisible(true);
+
+        // --- CONFIGURACIÓN DE VALIDACIONES (BINDER) ---
+        binder.forField(nombre)
+            .asRequired("El nombre es obligatorio")
+            .withValidator(n -> n.length() >= 3, "Mínimo 3 caracteres")
+            .bind(Usuario::getNombre, Usuario::setNombre);
+
+        binder.forField(email)
+            .asRequired("El email es obligatorio")
+            .withValidator(new com.vaadin.flow.data.validator.EmailValidator("Formato de email inválido"))
+            .bind(Usuario::getEmail, Usuario::setEmail);
+
+        binder.forField(password)
+            .asRequired("La contraseña es obligatoria")
+            .withValidator(p -> p.length() >= 6, "Mínimo 6 caracteres")
+            .bind(u -> "", (u, p) -> u.setContrasena(passwordEncoder.encode(p)));
+
+        binder.forField(rol)
+            .asRequired("Debe seleccionar un rol")
+            .bind(Usuario::getRol, Usuario::setRol);
 
         formLayout.add(nombre, apellido, email, password, rol);
-        formLayout.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1), 
-                                     new FormLayout.ResponsiveStep("400px", 2));
-        
-        // El email y password ocupan toda la fila para mejor lectura
         formLayout.setColspan(email, 2);
         formLayout.setColspan(password, 2);
         formLayout.setColspan(rol, 2);
 
-        // --- BOTONES ---
+        // --- BOTONES (REDISEÑADOS) ---
         Button btnAlta = new Button("Dar de Alta", new Icon(VaadinIcon.USER_CHECK));
         btnAlta.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        btnAlta.addClassName("btn-primary");
-        btnAlta.setWidthFull();
+        btnAlta.setMinWidth("150px");
 
+        Button btnCancelar = new Button("Cancelar");
+        btnCancelar.addThemeVariants(ButtonVariant.LUMO_TERTIARY); // Menos llamativo
+        btnCancelar.setMinWidth("120px");
+
+        // Acción de Cancelar
+        // Acción de Cancelar: Redirige explícitamente a la clase HomeView
+        btnCancelar.addClickListener(e -> {
+            UI.getCurrent().navigate(HomeView.class);
+        });
+
+        // Acción de Guardar
         btnAlta.addClickListener(e -> {
-            if (nombre.isEmpty() || email.isEmpty() || password.isEmpty() || rol.isEmpty()) {
-                Notification.show("Por favor, rellene todos los campos obligatorios")
-                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            Usuario nuevoUsuario = new Usuario();
+            if (binder.writeBeanIfValid(nuevoUsuario) && !apellido.isEmpty()) {
+                try {
+                    usuarioRepository.save(nuevoUsuario);
+                    Notification.show("Usuario " + nuevoUsuario.getNombre() + " creado con éxito")
+                            .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                    
+                    // Limpiar formulario
+                    binder.setBean(new Usuario());
+                    apellido.clear();
+                    
+                } catch (Exception ex) {
+                    Notification.show("Error: El nombre o email ya existen")
+                            .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                }
             } else {
-                // Aquí iría tu lógica para guardar en la base de datos
-                Notification.show("Usuario " + nombre.getValue() + " registrado como " + rol.getValue())
-                        .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-                limpiarCampos(nombre, apellido, email, password, rol);
+                if(apellido.isEmpty()) apellido.setInvalid(true);
+                Notification.show("Revise los campos obligatorios")
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
             }
         });
 
-        card.add(title, subtitle, formLayout, btnAlta);
-        add(card);
-    }
+        // Layout de botones alineados a la derecha y dentro de la tarjeta
+        HorizontalLayout actions = new HorizontalLayout(btnCancelar, btnAlta);
+        actions.setWidthFull();
+        actions.setJustifyContentMode(JustifyContentMode.END); // Alineación a la derecha
+        actions.setSpacing(true);
+        actions.setPadding(false);
 
-    private void limpiarCampos(TextField n, TextField a, EmailField e, PasswordField p, Select<String> r) {
-        n.clear();
-        a.clear();
-        e.clear();
-        p.clear();
-        r.clear();
+        card.add(title, subtitle, formLayout, actions);
+        add(card);
     }
 }

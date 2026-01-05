@@ -3,6 +3,7 @@ package com.example.application.security;
 import com.example.application.repository.UsuarioRepository;
 import com.example.application.model.Usuario;
 import com.vaadin.flow.server.VaadinSession;
+import org.springframework.security.crypto.password.PasswordEncoder; // IMPORTANTE
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
@@ -15,10 +16,12 @@ public class AuthService {
 
     private final UsuarioRepository usuarioRepository;
     private final Validator validator;
+    private final PasswordEncoder passwordEncoder; // Añadido
 
-    public AuthService(UsuarioRepository usuarioRepository, Validator validator) {
+    public AuthService(UsuarioRepository usuarioRepository, Validator validator, PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
         this.validator = validator; 
+        this.passwordEncoder = passwordEncoder; // Inyectado
     }
 
     public static final String ROL_SESSION_ATTRIBUTE = "userRole";
@@ -27,14 +30,15 @@ public class AuthService {
     public boolean authenticate(String username, String password) {
         Optional<Usuario> userOpt = usuarioRepository.findByNombre(username);
         
-        if (userOpt.isPresent() && userOpt.get().getContrasena().equals(password)) {
+        // Comparamos usando matches: password escrita vs hash de la base de datos
+        if (userOpt.isPresent() && passwordEncoder.matches(password, userOpt.get().getContrasena())) {
             Usuario user = userOpt.get();
             
             // Guardamos datos individuales
             VaadinSession.getCurrent().setAttribute(ROL_SESSION_ATTRIBUTE, user.getRol());
             VaadinSession.getCurrent().setAttribute(USERNAME_SESSION_ATTRIBUTE, user.getNombre());
             
-            // NUEVO: Guardamos el objeto completo para que ProductosView lo encuentre
+            // Guardamos el objeto completo
             VaadinSession.getCurrent().setAttribute("usuario", user);
             
             return true;
@@ -51,7 +55,9 @@ public class AuthService {
             return "El email ya está registrado.";
         }
         
-        Usuario newUser = new Usuario(name, password, "USER", email); 
+        // ENCRIPTAMOS la contraseña antes de crear el objeto
+        String encryptedPassword = passwordEncoder.encode(password);
+        Usuario newUser = new Usuario(name, encryptedPassword, "USER", email); 
         
         Set<ConstraintViolation<Usuario>> violations = validator.validate(newUser);
         if (!violations.isEmpty()) {
