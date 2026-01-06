@@ -12,7 +12,10 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.theme.lumo.LumoUtility.*;
+
+import java.io.ByteArrayInputStream;
 
 public class ProductosViewCard extends ListItem {
 
@@ -22,24 +25,41 @@ public class ProductosViewCard extends ListItem {
         addClassNames(Background.CONTRAST_5, Display.FLEX, FlexDirection.COLUMN, 
                      AlignItems.START, Padding.MEDIUM, BorderRadius.LARGE);
 
-        // Imagen (igual que antes)
+        // --- CONTENEDOR DE IMAGEN ---
         Div div = new Div();
         div.addClassNames(Background.CONTRAST, Display.FLEX, AlignItems.CENTER, 
                          JustifyContent.CENTER, Margin.Bottom.MEDIUM, Overflow.HIDDEN, 
                          BorderRadius.MEDIUM, Width.FULL);
         div.setHeight("160px");
-        Image image = new Image("https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80", producto.getNombre());
+
+        Image image = new Image();
+        image.setAlt(producto.getNombre());
         image.setWidthFull();
+        image.getStyle().set("object-fit", "cover");
+
+        // --- LÓGICA DE CARGA DINÁMICA ---
+        // Si el producto tiene imagen en la BD, la mostramos. Si no, la genérica.
+        if (producto.getImagenBlob() != null && producto.getImagenBlob().length > 0) {
+            StreamResource resource = new StreamResource("img-" + producto.getId(), 
+                () -> new ByteArrayInputStream(producto.getImagenBlob()));
+            image.setSrc(resource);
+        } else {
+            // Foto genérica de respaldo
+            image.setSrc("https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80");
+        }
         div.add(image);
 
+        // --- DATOS DEL PRODUCTO ---
         Span header = new Span(producto.getNombre());
         header.addClassNames(FontSize.XLARGE, FontWeight.SEMIBOLD);
 
         Span subtitle = new Span(String.format("%.2f €", producto.getPrecio()));
         subtitle.addClassNames(FontSize.SMALL, TextColor.SECONDARY);
 
+        Paragraph description = new Paragraph("Producto fresco de alta calidad preparado al momento.");
+        description.addClassNames(Margin.Vertical.MEDIUM, FontSize.SMALL);
 
-        // Botón Pedir (Usuario normal)
+        // Botón Pedir
         Button btnPedir = new Button("Pedir", VaadinIcon.PLUS.create());
         btnPedir.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
         btnPedir.setWidthFull();
@@ -49,30 +69,24 @@ public class ProductosViewCard extends ListItem {
                     .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
         });
 
-        add(div, header, subtitle, btnPedir);
+        add(div, header, subtitle, description, btnPedir);
 
         // --- SECCIÓN ADMIN ---
         if (authService.isAdmin()) {
             HorizontalLayout adminButtons = new HorizontalLayout();
             adminButtons.setWidthFull();
-            adminButtons.setMargin(true);
             adminButtons.addClassName(Margin.Top.SMALL);
+            adminButtons.setJustifyContentMode(com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode.AROUND);
 
             Button editBtn = new Button(VaadinIcon.EDIT.create());
             editBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_CONTRAST);
-            editBtn.setTooltipText("Editar producto");
-            editBtn.addClickListener(e -> {
-                // Navegamos pasando el ID del producto
-                UI.getCurrent().navigate(EditProductView.class, producto.getId());
-            });
+            editBtn.addClickListener(e -> UI.getCurrent().navigate(EditProductView.class, producto.getId()));
 
             Button deleteBtn = new Button(VaadinIcon.TRASH.create());
             deleteBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ERROR);
-            deleteBtn.setTooltipText("Eliminar producto");
             deleteBtn.addClickListener(e -> {
                 productoRepository.delete(producto);
                 Notification.show("Producto eliminado");
-                // Recargamos la vista para que desaparezca la card
                 UI.getCurrent().getPage().reload();
             });
 
