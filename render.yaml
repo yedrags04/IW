@@ -5,8 +5,10 @@ services:
     javaVersion: "17"
     region: frankfurt
     plan: free
-    buildCommand: cd my-app && mvn clean package -DskipTests
-    startCommand: java -Dserver.port=$PORT -jar my-app/target/my-app-*.jar
+    buildCommand: mvn -DskipTests -B clean package -f my-app/pom.xml
+    startCommand: java -jar my-app/target/my-app-*.jar
     envVars:
+      - key: PORT
+        value: "10000"
       - key: JAVA_OPTS
         value: -Xmx512m
