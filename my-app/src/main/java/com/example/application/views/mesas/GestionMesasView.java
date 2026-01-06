@@ -1,10 +1,15 @@
 package com.example.application.views.mesas;
 
+import com.example.application.model.Mesa;
+import com.example.application.security.AuthService;
+import com.example.application.services.MesaService;
 import com.example.application.views.MainLayout;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
-import com.vaadin.flow.component.html.*;
+import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -13,6 +18,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.theme.lumo.LumoUtility;
 import jakarta.annotation.security.RolesAllowed;
 
 @PageTitle("Gestión de Mesas | Tu Food")
@@ -20,122 +26,142 @@ import jakarta.annotation.security.RolesAllowed;
 @RolesAllowed({"TRABAJADOR", "ADMIN"})
 public class GestionMesasView extends VerticalLayout {
 
-    private FlexLayout mesaContainer;
-    private int contadorMesas = 10; // Empezamos con 10 mesas
+    private final MesaService mesaService;
+    private final AuthService authService;
+    private final FlexLayout mesaContainer;
 
-    public GestionMesasView() {
-        addClassName("mesas-view");
+    public GestionMesasView(MesaService mesaService, AuthService authService) {
+        this.mesaService = mesaService;
+        this.authService = authService;
+
+        // Configuración del contenedor principal
         setAlignItems(Alignment.CENTER);
+        setPadding(true);
+        setSpacing(true);
+        getStyle().set("background-color", "var(--lumo-contrast-5pct)");
+        getStyle().set("min-height", "100vh");
 
-        H2 title = new H2("Panel de Mesas");
-        Paragraph subtitle = new Paragraph("Administre las mesas del local y sus comandas.");
+        // --- ENCABEZADO ---
+        H1 title = new H1("Gestión de Mesas");
+        title.addClassNames(LumoUtility.FontSize.XXXLARGE, LumoUtility.Margin.Top.MEDIUM);
         
-        // --- BARRA DE ACCIONES SUPERIOR ---
+        Paragraph subtitle = new Paragraph("Panel operativo de sala y facturación");
+        subtitle.addClassNames(LumoUtility.TextColor.SECONDARY, LumoUtility.Margin.Bottom.LARGE);
+
+        // --- BARRA ADMIN (Solo visible si es ADMIN) ---
         HorizontalLayout adminBar = new HorizontalLayout();
-        adminBar.addClassName("admin-table-bar");
+        adminBar.addClassNames(LumoUtility.Margin.Bottom.MEDIUM);
+        if (authService.isAdmin()) {
+            Button btnAdd = new Button("Añadir Mesa", VaadinIcon.PLUS.create(), e -> {
+                mesaService.añadirMesa();
+                refreshMesas();
+            });
+            btnAdd.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_PRIMARY);
 
-        Button btnAddTable = new Button("Añadir Mesa", VaadinIcon.PLUS.create(), e -> añadirMesa());
-        btnAddTable.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_PRIMARY);
+            Button btnRemove = new Button("Quitar Mesa", VaadinIcon.MINUS.create(), e -> {
+                mesaService.eliminarUltimaMesa();
+                refreshMesas();
+            });
+            btnRemove.addThemeVariants(ButtonVariant.LUMO_ERROR);
+            
+            adminBar.add(btnAdd, btnRemove);
+        }
 
-        Button btnRemoveTable = new Button("Quitar Mesa", VaadinIcon.MINUS.create(), e -> quitarMesa());
-        btnRemoveTable.addThemeVariants(ButtonVariant.LUMO_ERROR);
-
-        adminBar.add(btnAddTable, btnRemoveTable);
-        add(title, subtitle, adminBar);
-
-        // Contenedor de mesas
+        // --- CONTENEDOR DE MESAS (Lógica de 4 por fila y centrado) ---
         mesaContainer = new FlexLayout();
-        mesaContainer.addClassName("mesa-grid");
         mesaContainer.setFlexWrap(FlexLayout.FlexWrap.WRAP);
-        mesaContainer.setJustifyContentMode(JustifyContentMode.CENTER);
+        mesaContainer.setJustifyContentMode(JustifyContentMode.CENTER); // Centra las mesas de la última fila si es impar
+        
+        // Limitamos el ancho para que quepan exactamente 4 mesas (180px card + 20px gap) * 4 = ~800px
+        mesaContainer.setMaxWidth("850px"); 
+        mesaContainer.getStyle().set("gap", "25px");
 
-        renderizarMesas();
-        add(mesaContainer);
+        add(title, subtitle, adminBar, mesaContainer);
+        refreshMesas();
     }
 
-    private void renderizarMesas() {
+    private void refreshMesas() {
         mesaContainer.removeAll();
-        for (int i = 1; i <= contadorMesas; i++) {
-            boolean ocupada = (i % 3 == 0); 
-            mesaContainer.add(createMesa(i, ocupada));
-        }
-    }
-
-    private void añadirMesa() {
-        contadorMesas++;
-        renderizarMesas();
-        Notification.show("Mesa " + contadorMesas + " añadida.");
-    }
-
-    private void quitarMesa() {
-        if (contadorMesas > 0) {
-            Notification.show("Mesa " + contadorMesas + " eliminada.");
-            contadorMesas--;
-            renderizarMesas();
-        }
-    }
-
-    private Button createMesa(int numero, boolean ocupada) {
-        Button mesaBtn = new Button();
-        mesaBtn.addClassName("mesa-item");
-
-        Icon icon = VaadinIcon.TABLE.create();
-        Span label = new Span("Mesa " + numero);
-        label.addClassName("mesa-label");
-
-        Span statusIndicator = new Span(ocupada ? "OCUPADA" : "LIBRE");
-        statusIndicator.addClassName("status-indicator");
-
-        VerticalLayout layout = new VerticalLayout(icon, label, statusIndicator);
-        layout.setAlignItems(Alignment.CENTER);
-        layout.setSpacing(false);
-        layout.setPadding(false);
-
-        mesaBtn.getElement().appendChild(layout.getElement());
-        
-        if (ocupada) {
-            mesaBtn.addThemeNames("occupied");
-            mesaBtn.addClickListener(e -> showComandaDialog(numero));
-        } else {
-            mesaBtn.addThemeNames("free");
-            mesaBtn.addClickListener(e -> showComandaDialog(numero)); // Ahora permitimos abrir para añadir comanda
-        }
-
-        return mesaBtn;
-    }
-
-    private void showComandaDialog(int mesaNum) {
-        Dialog dialog = new Dialog();
-        dialog.setHeaderTitle("Comanda - Mesa " + mesaNum);
-        
-        VerticalLayout dialogContent = new VerticalLayout();
-        dialogContent.setPadding(false);
-
-        // Simulación de comanda
-        UnorderedList list = new UnorderedList();
-        list.addClassName("comanda-list");
-        list.add(new ListItem("2x Classic Burger - 25.00€"));
-        
-        // --- BOTÓN PARA AÑADIR PRODUCTO A LA COMANDA ---
-        Button btnAddProduct = new Button("Añadir Producto", VaadinIcon.PLUS_CIRCLE.create());
-        btnAddProduct.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
-        btnAddProduct.setWidthFull();
-        btnAddProduct.addClickListener(e -> {
-            Notification.show("Abriendo catálogo para Mesa " + mesaNum);
-            // Aquí podrías abrir otro diálogo con la lista de productos
+        mesaService.obtenerTodas().forEach(mesa -> {
+            mesaContainer.add(createMesaUI(mesa));
         });
+    }
 
-        H4 total = new H4("Total: 25.00 €");
-        total.getStyle().set("color", "var(--lumo-primary-color)");
-
-        dialogContent.add(list, btnAddProduct, total);
-        dialog.add(dialogContent);
-
-        Button closeButton = new Button("Cerrar", e -> dialog.close());
-        Button printButton = new Button("Cobrar", new Icon(VaadinIcon.PRINT));
-        printButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+    private VerticalLayout createMesaUI(Mesa mesa) {
+        boolean ocupada = "OCUPADA".equals(mesa.getEstado());
         
-        dialog.getFooter().add(closeButton, printButton);
+        VerticalLayout card = new VerticalLayout();
+        card.setWidth("180px"); // Ancho fijo para mantener la cuadrícula
+        card.setHeight("180px");
+        card.setAlignItems(Alignment.CENTER);
+        card.setJustifyContentMode(JustifyContentMode.CENTER);
+        card.setSpacing(true);
+        
+        // Estilo Premium
+        card.getStyle()
+            .set("border-radius", "24px")
+            .set("cursor", "pointer")
+            .set("transition", "all 0.3s ease")
+            .set("box-shadow", "var(--lumo-box-shadow-s)")
+            .set("background-color", "var(--lumo-base-color)")
+            .set("border", "2px solid " + (ocupada ? "var(--lumo-error-color)" : "var(--lumo-success-color-50pct)"));
+
+        // Efecto Hover (vía JavaScript o CSS inline)
+        card.getElement().addEventListener("mouseenter", e -> card.getStyle().set("transform", "scale(1.05)"));
+        card.getElement().addEventListener("mouseleave", e -> card.getStyle().set("transform", "scale(1.0)"));
+
+        Icon icon = (ocupada ? VaadinIcon.SHOP : VaadinIcon.TABLE).create();
+        icon.setSize("50px");
+        icon.setColor(ocupada ? "var(--lumo-error-color)" : "var(--lumo-success-color)");
+
+        Span label = new Span("MESA " + mesa.getNumeroMesa());
+        label.addClassNames(LumoUtility.FontWeight.BOLD, LumoUtility.FontSize.LARGE);
+        
+        Span status = new Span(mesa.getEstado());
+        status.getElement().getThemeList().add("badge pill " + (ocupada ? "error" : "success"));
+
+        card.add(icon, label, status);
+        card.addClickListener(e -> openMesaDialog(mesa));
+        
+        return card;
+    }
+
+    private void openMesaDialog(Mesa mesa) {
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("Gestión Mesa " + mesa.getNumeroMesa());
+        
+        boolean estaOcupada = "OCUPADA".equals(mesa.getEstado());
+        
+        VerticalLayout content = new VerticalLayout();
+        content.setPadding(true);
+        
+        if (estaOcupada) {
+            content.add(new Span("Mesa con servicio en curso."));
+            // Podrías añadir aquí: content.add(new H3("Total: " + mesa.getTotalAcumulado() + " €"));
+        } else {
+            content.add(new Span("¿Desea abrir esta mesa para una nueva comanda?"));
+        }
+
+        Button btnAddProduct = new Button("Abrir Comanda / Añadir", VaadinIcon.PLUS.create(), e -> {
+            mesaService.actualizarEstado(mesa.getNumeroMesa(), "OCUPADA");
+            refreshMesas();
+            dialog.close();
+        });
+        btnAddProduct.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        btnAddProduct.setWidthFull();
+
+        Button btnCobrar = new Button("Finalizar y Cobrar", VaadinIcon.CASH.create(), e -> {
+            mesaService.actualizarEstado(mesa.getNumeroMesa(), "LIBRE");
+            Notification.show("Mesa liberada");
+            refreshMesas();
+            dialog.close();
+        });
+        btnCobrar.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_PRIMARY);
+        btnCobrar.setVisible(estaOcupada);
+        btnCobrar.setWidthFull();
+
+        dialog.add(content);
+        dialog.getFooter().add(new Button("Cerrar", e -> dialog.close()), btnAddProduct, btnCobrar);
         dialog.open();
     }
 }

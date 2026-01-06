@@ -85,6 +85,7 @@ public class AuthService {
         return "ADMIN".equals(role);
     }
     
+    
     public boolean isUserLoggedIn() {
         return VaadinSession.getCurrent().getAttribute(USERNAME_SESSION_ATTRIBUTE) != null;
     }

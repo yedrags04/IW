@@ -21,7 +21,6 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 
-import jakarta.annotation.security.RolesAllowed;
 
 import org.vaadin.lineawesome.LineAwesomeIconUrl;
 
@@ -42,12 +41,12 @@ public class TuFoodView extends Composite<VerticalLayout> {
         this.orderService = orderService;
         VerticalLayout root = getContent();
         
-        if (!authService.isAdmin()) {
-            root.setAlignItems(FlexComponent.Alignment.CENTER);
-            root.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
-            root.add(new H2("Acceso denegado"));
-            return;
-        }
+    if (!authService.isAdmin() && !authService.isWorker()) {
+                root.setAlignItems(FlexComponent.Alignment.CENTER);
+                root.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+                root.add(new H2("Acceso denegado"));
+                return;
+            }
 
         root.setSizeFull();
         root.setPadding(false);
