@@ -5,7 +5,7 @@ builder = "nixpacks"
 providers = ["java"]
 
 [env]
-NIXPACKS_JDK_VERSION = "21"
+NIXPACKS_JDK_VERSION = "17"
 
 [deploy]
 startCommand = "java -jar my-app/target/my-app-*.jar"
