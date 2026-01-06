@@ -56,9 +56,7 @@ public class ProductosViewCard extends ListItem {
         Span subtitle = new Span(String.format("%.2f €", producto.getPrecio()));
         subtitle.addClassNames(FontSize.SMALL, TextColor.SECONDARY);
 
-        Paragraph description = new Paragraph("Producto fresco de alta calidad preparado al momento.");
-        description.addClassNames(Margin.Vertical.MEDIUM, FontSize.SMALL);
-
+    
         // Botón Pedir
         Button btnPedir = new Button("Pedir", VaadinIcon.PLUS.create());
         btnPedir.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
@@ -69,7 +67,7 @@ public class ProductosViewCard extends ListItem {
                     .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
         });
 
-        add(div, header, subtitle, description, btnPedir);
+        add(div, header, subtitle, btnPedir);
 
         // --- SECCIÓN ADMIN ---
         if (authService.isAdmin()) {
