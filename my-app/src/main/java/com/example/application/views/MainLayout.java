@@ -125,9 +125,12 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
             nav.addItem(new SideNavItem("Añadir Producto", AddProductView.class, LineAwesomeIcon.PLUS_CIRCLE_SOLID.create()));
             nav.addItem(new SideNavItem("Estadísticas", EstadisticasView.class, LineAwesomeIcon.CHART_BAR_SOLID.create()));
             nav.addItem(new SideNavItem("Alta Usuarios", AdminUserRegistrationView.class, VaadinIcon.PLUS.create()));
+            nav.addItem(new SideNavItem("Gestión Mesas", GestionMesasView.class, VaadinIcon.TABLE.create()));
+            nav.addItem(new SideNavItem("Gestión Pedidos", TuFoodView.class, LineAwesomeIcon.UTENSILS_SOLID.create()));
+
         }
 
-        if (!authService.isWorker()) {
+        if (authService.isWorker()) {
             nav.addItem(new SideNavItem("Gestión Mesas", GestionMesasView.class, VaadinIcon.TABLE.create()));
             nav.addItem(new SideNavItem("Gestión Pedidos", TuFoodView.class, LineAwesomeIcon.UTENSILS_SOLID.create()));
 
