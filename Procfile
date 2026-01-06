@@ -1,1 +1,1 @@
-web: cd my-app && mvn clean package -DskipTests && java -jar target/my-app-*.jar
+web: mvn -f my-app/pom.xml clean package -DskipTests && java -jar my-app/target/my-app-*.jar
