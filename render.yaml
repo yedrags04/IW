@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: mi-app
+    runtime: java
+    javaVersion: "17"
+    region: frankfurt
+    plan: free
+    buildCommand: cd my-app && mvn clean package -DskipTests
+    startCommand: java -Dserver.port=$PORT -jar my-app/target/my-app-*.jar
+    envVars:
+      - key: JAVA_OPTS
+        value: -Xmx512m
