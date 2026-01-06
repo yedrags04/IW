@@ -1,12 +1,6 @@
 [build]
-builder = "nixpacks"
-
-[build.nixpacks]
-providers = ["java"]
-
-[env]
-NIXPACKS_JDK_VERSION = "17"
+builder = "dockerfile"
 
 [deploy]
-startCommand = "java -jar my-app/target/my-app-*.jar"
+startCommand = "java -jar app.jar"
 restartPolicyMaxRetries = 5
