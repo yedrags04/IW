@@ -1,6 +1,12 @@
 [build]
 builder = "nixpacks"
 
+[build.nixpacks]
+providers = ["java"]
+
+[env]
+NIXPACKS_JDK_VERSION = "21"
+
 [deploy]
 startCommand = "java -jar my-app/target/my-app-*.jar"
 restartPolicyMaxRetries = 5
