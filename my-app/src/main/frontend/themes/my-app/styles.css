@@ -580,3 +580,126 @@ header vaadin-button[theme~="error"]:hover {
     padding-bottom: 10px;
     color: var(--lumo-primary-color);
 }
+
+/* --- VISTA DE MESAS --- */
+.mesas-view {
+    padding-top: 60px;
+}
+
+.mesa-grid {
+    gap: 20px;
+    max-width: 900px;
+    padding: 20px;
+}
+
+.mesa-item {
+    width: 150px;
+    height: 160px !important;
+    display: flex;
+    padding: 10px !important;
+    flex-direction: column;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.mesa-item vaadin-vertical-layout {
+    gap: 8px;
+}
+
+.mesa-item:hover {
+    transform: scale(1.05);
+}
+
+/* Colores según estado */
+.mesa-item.free {
+    background-color: #e8f5e9 !important; /* Verde muy suave */
+    color: #2e7d32 !important;
+    border: 2px solid #2e7d32;
+}
+
+.mesa-item.occupied {
+    background-color: #ffebee !important; /* Rojo muy suave */
+    color: #c62828 !important;
+    border: 2px solid #c62828;
+    box-shadow: 0 4px 10px rgba(198, 40, 40, 0.2);
+}
+
+.mesa-label {
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+/* Estilo base del indicativo (Badge) */
+.status-indicator {
+    font-size: 0.75rem;
+    font-weight: 800;
+    padding: 4px 12px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+/* Colores específicos según el estado */
+.mesa-item.free .status-indicator {
+    background-color: #2e7d32;
+    color: white;
+}
+
+.mesa-item.occupied .status-indicator {
+    background-color: #c62828;
+    color: white;
+    /* Efecto de pulsación suave para mesas ocupadas */
+    animation: pulse-red 2s infinite;
+}
+
+/* Animación opcional para llamar la atención sobre mesas ocupadas */
+@keyframes pulse-red {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+/* Ajuste de iconos dentro de botones */
+.mesa-item vaadin-icon {
+    width: 40px;
+    height: 40px;
+}
+
+/* Lista de la comanda en el Dialog */
+.comanda-list {
+    list-style: none;
+    padding: 0;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.comanda-list li {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--lumo-contrast-10pct);
+    font-family: 'Poppins', sans-serif;
+}
+
+/* --- BARRA DE ADMINISTRACIÓN DE MESAS --- */
+.admin-table-bar {
+    margin-bottom: 30px;
+    padding: 15px;
+    background: white;
+    border-radius: var(--lumo-border-radius-l);
+    box-shadow: var(--lumo-box-shadow-s);
+}
+
+/* Botón de añadir producto dentro del diálogo */
+.comanda-dialog vaadin-button[theme~="contrast"] {
+    margin-top: 15px;
+    background-color: var(--lumo-primary-color-10pct);
+    color: var(--lumo-primary-color);
+    border: 1px dashed var(--lumo-primary-color);
+}
+
+.comanda-dialog vaadin-button[theme~="contrast"]:hover {
+    background-color: var(--lumo-primary-color-50pct);
+    color: white;
+}

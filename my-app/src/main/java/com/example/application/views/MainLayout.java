@@ -2,6 +2,7 @@ package com.example.application.views;
 
 import com.example.application.security.AuthService;
 import com.example.application.views.main.HomeView;
+import com.example.application.views.mesas.GestionMesasView;
 import com.example.application.views.productos.ProductosView;
 import com.example.application.views.productos.AddProductView;
 import com.example.application.views.tufood.TuFoodView;
@@ -125,7 +126,13 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
             nav.addItem(new SideNavItem("Añadir Producto", AddProductView.class, LineAwesomeIcon.PLUS_CIRCLE_SOLID.create()));
             nav.addItem(new SideNavItem("Estadísticas", EstadisticasView.class, LineAwesomeIcon.CHART_BAR_SOLID.create()));
             nav.addItem(new SideNavItem("Alta Usuarios", AdminUserRegistrationView.class, VaadinIcon.PLUS.create()));
+            nav.addItem(new SideNavItem("Gestión Mesas", GestionMesasView.class, VaadinIcon.TABLE.create()));
         }
+
+        if (!authService.isWorker()) {
+            nav.addItem(new SideNavItem("Gestión Mesas", GestionMesasView.class, VaadinIcon.TABLE.create()));
+        }
+
 
         return nav;
     }

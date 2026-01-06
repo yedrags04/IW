@@ -88,4 +88,12 @@ public class AuthService {
     public boolean isUserLoggedIn() {
         return VaadinSession.getCurrent().getAttribute(USERNAME_SESSION_ATTRIBUTE) != null;
     }
+
+    public boolean isWorker() {
+        // Obtenemos el atributo del rol guardado en la sesión
+        Object roleAttr = com.vaadin.flow.server.VaadinSession.getCurrent()
+                .getAttribute("ROLE"); // Asegúrate de usar el mismo nombre que usas al hacer login
+        
+        return roleAttr != null && roleAttr.toString().equals("TRABAJADOR");
+    }
 }
