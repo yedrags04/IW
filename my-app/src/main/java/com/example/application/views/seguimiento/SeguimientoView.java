@@ -14,7 +14,9 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 
-
+/**
+ * Vista de seguimiento avanzada. Utiliza Composite para encapsular el layout.
+ */
 @PageTitle("Seguimiento de Pedido | TuFood")
 @Route(value = "seguimiento", layout = MainLayout.class)
 public class SeguimientoView extends Composite<VerticalLayout> implements BeforeEnterObserver {
@@ -29,7 +31,6 @@ public class SeguimientoView extends Composite<VerticalLayout> implements Before
         root.setAlignItems(FlexComponent.Alignment.CENTER);
         root.getStyle().set("margin-top", "var(--lumo-size-xl)");
 
-        // Contenedor de la "Tarjeta de seguimiento"
         VerticalLayout card = new VerticalLayout();
         card.setMaxWidth("800px");
         card.addClassNames(LumoUtility.Background.BASE, LumoUtility.BorderRadius.LARGE, LumoUtility.BoxShadow.MEDIUM, LumoUtility.Padding.LARGE);
@@ -54,8 +55,10 @@ public class SeguimientoView extends Composite<VerticalLayout> implements Before
         boolean esRecogida = direccion.equalsIgnoreCase("Recogida en Tienda");
 
         stepperContainer.removeAll();
+        // Genera el stepper adaptando los textos según si el cliente viene a tienda o es a domicilio
         stepperContainer.add(createTrackingStepper(esRecogida));
 
+        // Si es a domicilio, mostramos quién trae el pedido
         if (!esRecogida) {
             if (repartidorCard == null) repartidorCard = createRepartidorCard();
             stepperContainer.add(repartidorCard);
@@ -65,6 +68,9 @@ public class SeguimientoView extends Composite<VerticalLayout> implements Before
         infoMetodo.setText(metodo);
     }
 
+    /**
+     * Dibuja el stepper con líneas conectoras entre pasos.
+     */
     private Component createTrackingStepper(boolean esRecogida) {
         HorizontalLayout stepper = new HorizontalLayout();
         stepper.setWidthFull();
@@ -78,7 +84,7 @@ public class SeguimientoView extends Composite<VerticalLayout> implements Before
             createConnector(true),
             createStep("Cocina", VaadinIcon.FIRE, true),
             createConnector(true),
-            createStep(tercerPasoEtiqueta, tercerPasoIcono, true), // Paso actual activo
+            createStep(tercerPasoEtiqueta, tercerPasoIcono, true), 
             createConnector(false),
             createStep("Entregado", VaadinIcon.PACKAGE, false)
         );
@@ -90,17 +96,22 @@ public class SeguimientoView extends Composite<VerticalLayout> implements Before
         v.setPadding(false); v.setSpacing(false);
         v.setAlignItems(FlexComponent.Alignment.CENTER);
         v.setWidth("min-content");
+
         Div circle = new Div(icon.create());
         circle.getStyle()
             .set("background-color", active ? "var(--lumo-primary-color)" : "var(--lumo-contrast-10pct)")
             .set("color", active ? "white" : "var(--lumo-disabled-text-color)")
             .set("border-radius", "50%").set("padding", "12px").set("display", "flex");
+
         Span text = new Span(label);
         text.addClassNames(LumoUtility.FontSize.XSMALL, LumoUtility.Margin.Top.SMALL, LumoUtility.FontWeight.BOLD);
         v.add(circle, text);
         return v;
     }
 
+    /**
+     * Dibuja la línea que une dos círculos del stepper.
+     */
     private Div createConnector(boolean active) {
         Div line = new Div();
         line.setHeight("4px"); line.setWidth("50px");
@@ -109,6 +120,9 @@ public class SeguimientoView extends Composite<VerticalLayout> implements Before
         return line;
     }
 
+    /**
+     * Tarjeta visual con la foto y datos del repartidor (ficticio).
+     */
     private Component createRepartidorCard() {
         HorizontalLayout card = new HorizontalLayout();
         card.setWidthFull();

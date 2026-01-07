@@ -12,9 +12,12 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
 import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.List;
 
+/* * VISTA DE ESTADÍSTICAS
+ * Proporciona un cuadro de mando con indicadores clave (KPIs) y una tabla 
+ * con el desglose de productos más vendidos.
+ */
 @PageTitle("Estadísticas | Tu Food")
 @Route(value = "estadisticas", layout = MainLayout.class)
 @PermitAll
@@ -24,47 +27,41 @@ public class EstadisticasView extends VerticalLayout {
 
     public EstadisticasView(@Autowired OrderService orderService) {
         this.orderService = orderService;
-        
-        addClassName("estadisticas-view");
         setDefaultHorizontalComponentAlignment(Alignment.CENTER);
-        setPadding(false);
-        setSpacing(true);
         setWidthFull();
 
-        // --- ENCABEZADO ---
         H2 title = new H2("Panel de Control del Restaurante");
         Paragraph subtitle = new Paragraph("Resumen general del rendimiento de ventas y productos.");
         add(title, subtitle);
 
-        // --- LÓGICA DE CONTEO DINÁMICO ---
-        // Obtenemos el total de pedidos usando el servicio que conecta con la BD
+        // DATOS DINÁMICOS: Consultamos al servicio el número total de pedidos registrados
         String totalPedidos = String.valueOf(orderService.getTodosLosPedidos().size());
 
-        // --- FILA DE TARJETAS (KPIs) ---
+        // FILA DE TARJETAS KPI: Diseño visual rápido para métricas clave
         HorizontalLayout kpiLayout = new HorizontalLayout();
         kpiLayout.setWidthFull();
-        kpiLayout.setSpacing(true);
         kpiLayout.setJustifyContentMode(JustifyContentMode.CENTER);
 
         kpiLayout.add(
             createStatCard("Ventas Totales", "1.250,50 €", VaadinIcon.MONEY, "success"),
-            createStatCard("Pedidos Totales", totalPedidos, VaadinIcon.TRUCK, "info"), // Ahora es dinámico
+            createStatCard("Pedidos Totales", totalPedidos, VaadinIcon.TRUCK, "info"),
             createStatCard("Ticket Medio", "27,80 €", VaadinIcon.CHART_LINE, "warning")
         );
         add(kpiLayout);
 
-        // --- SECCIÓN DE PRODUCTOS (GRID) ---
         add(new H3("Productos más consumidos"));
         configureGrid();
     }
 
+    // Configuración de la tabla (Grid) para mostrar el detalle de productos
     private void configureGrid() {
         Grid<ProductoStats> grid = new Grid<>(ProductoStats.class, false);
         grid.setAllRowsVisible(true);
-        grid.addColumn(ProductoStats::getNombre).setHeader("Producto").setAutoWidth(true);
-        grid.addColumn(ProductoStats::getCantidad).setHeader("Unidades Vendidas").setAutoWidth(true);
-        grid.addColumn(ProductoStats::getIngresos).setHeader("Ingresos Generados (€)").setAutoWidth(true);
+        grid.addColumn(ProductoStats::getNombre).setHeader("Producto");
+        grid.addColumn(ProductoStats::getCantidad).setHeader("Unidades Vendidas");
+        grid.addColumn(ProductoStats::getIngresos).setHeader("Ingresos (€)");
 
+        // Datos de ejemplo para la visualización del Grid
         grid.setItems(List.of(
             new ProductoStats("Classic Burger", 120, "1.500,00"),
             new ProductoStats("Pizza Pepperoni", 85, "1.190,00"),
@@ -72,20 +69,18 @@ public class EstadisticasView extends VerticalLayout {
             new ProductoStats("Refresco 500ml", 310, "930,00")
         ));
         
-        grid.addClassName("stats-grid");
         add(grid);
     }
 
+    // Método auxiliar para crear las tarjetas visuales de estadísticas
     private Div createStatCard(String label, String value, VaadinIcon icon, String theme) {
         Div card = new Div();
         card.addClassNames("stat-card", theme);
-        Icon iconComp = icon.create();
-        Span title = new Span(label);
-        H2 val = new H2(value);
-        card.add(iconComp, title, val);
+        card.add(icon.create(), new Span(label), new H2(value));
         return card;
     }
 
+    // DTO (Data Transfer Object) interno para manejar las filas del Grid
     public static class ProductoStats {
         private String nombre;
         private int cantidad;

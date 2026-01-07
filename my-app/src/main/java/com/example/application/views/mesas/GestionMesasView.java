@@ -25,13 +25,16 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.QueryParameters;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.theme.lumo.LumoUtility;
 import jakarta.annotation.security.RolesAllowed;
 
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Vista para la gestión de mesas del restaurante.
+ * Restringida a usuarios con rol TRABAJADOR o ADMIN.
+ */
 @PageTitle("Sala | TuFood")
 @Route(value = "mesas", layout = MainLayout.class)
 @RolesAllowed({"TRABAJADOR", "ADMIN"})
@@ -47,11 +50,13 @@ public class GestionMesasView extends VerticalLayout {
         this.orderService = orderService;
         this.repo = repo;
         
+        // Configuración visual del contenedor principal
         setSizeFull();
         setAlignItems(Alignment.CENTER);
         setPadding(true);
         getStyle().set("background-color", "#f5f5f5");
         
+        // Contenedor flexible para que las mesas se ajusten a la pantalla (Wrap)
         container = new FlexLayout();
         container.setWidthFull();
         container.setMaxWidth("1200px"); 
@@ -64,9 +69,12 @@ public class GestionMesasView extends VerticalLayout {
         titulo.getStyle().set("color", "var(--lumo-primary-color)");
         
         add(titulo, new Hr(), container);
-        refresh();
+        refresh(); // Carga inicial de las mesas
     }
 
+    /**
+     * Dibuja o redibuja las tarjetas de las mesas basándose en su estado actual.
+     */
     private void refresh() {
         container.removeAll();
         mesaService.obtenerTodas().forEach(mesa -> {
@@ -78,8 +86,9 @@ public class GestionMesasView extends VerticalLayout {
             card.setJustifyContentMode(JustifyContentMode.CENTER);
             card.setSpacing(false);
             card.setWidth("250px");
-            card.setHeight("240px"); // Un poco más alta para el botón liberar
+            card.setHeight("240px");
             
+            // Estilo dinámico según ocupación
             if (ocupada) {
                 card.getStyle().set("background-color", "var(--lumo-primary-color)");
                 card.getStyle().set("color", "white");
@@ -105,7 +114,7 @@ public class GestionMesasView extends VerticalLayout {
             
             card.add(iconoMesa, label, totalStr);
 
-            // FUNCIONALIDAD LIBERAR (Vuelve a aparecer en la tarjeta)
+            // Botón de emergencia para liberar mesa si se queda en estado 'Ocupada' sin productos
             if (ocupada && total <= 0) {
                 Button btnLimpiar = new Button("LIBERAR MESA", e -> {
                     mesaService.actualizarEstado(mesa.getNumeroMesa(), "LIBRE");
@@ -121,11 +130,15 @@ public class GestionMesasView extends VerticalLayout {
         });
     }
 
+    /**
+     * Abre las opciones principales al hacer clic en una mesa.
+     */
     private void openDialog(Mesa mesa) {
         Dialog d = new Dialog();
         d.setHeaderTitle("Mesa " + mesa.getNumeroMesa());
         boolean ocupada = "OCUPADA".equals(mesa.getEstado());
 
+        // Botón para abrir comanda o gestionar la existente
         Button btnComanda = new Button(ocupada ? "Gestionar Pedido" : "Abrir Mesa", e -> {
             if (!ocupada) mesaService.actualizarEstado(mesa.getNumeroMesa(), "OCUPADA");
             d.close();
@@ -134,6 +147,7 @@ public class GestionMesasView extends VerticalLayout {
         btnComanda.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         btnComanda.setWidthFull();
 
+        // Botón para navegar a la vista de pago
         Button btnPago = new Button("Cobrar Cuenta", e -> {
             d.close();
             UI.getCurrent().navigate(PagoView.class, QueryParameters.simple(Map.of(
@@ -142,6 +156,7 @@ public class GestionMesasView extends VerticalLayout {
                 "origen", "mesas"
             )));
         });
+        // Solo visible si hay algo que cobrar
         btnPago.setVisible(ocupada && mesa.getTotalAcumulado() > 0);
         btnPago.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_PRIMARY);
         btnPago.setWidthFull();
@@ -151,6 +166,9 @@ public class GestionMesasView extends VerticalLayout {
         d.open();
     }
 
+    /**
+     * Diálogo interactivo para añadir/quitar productos de la mesa.
+     */
     private void openComanda(Mesa mesa) {
         Dialog pd = new Dialog("Comanda: Mesa " + mesa.getNumeroMesa());
         pd.setWidth("800px");
@@ -161,6 +179,7 @@ public class GestionMesasView extends VerticalLayout {
         grid.addColumn(Producto::getNombre).setHeader("Plato");
         grid.addColumn(p -> String.format("%.2f€", p.getPrecio())).setHeader("Precio");
         
+        // Columna con botones +/- para gestionar cantidades
         grid.addComponentColumn(p -> {
             int c = mesaService.obtenerCantidadProductoEnMesa(mesa.getNumeroMesa(), p.getId());
             Button mas = new Button(VaadinIcon.PLUS.create(), e -> { 
@@ -179,7 +198,7 @@ public class GestionMesasView extends VerticalLayout {
         grid.setItems(repo.findAll());
         pd.add(grid);
 
-        // BOTÓN MANDAR A COCINA
+        // Envía la información al OrderService para que aparezca en el monitor de cocina
         Button btnCocina = new Button("MANDAR A COCINA", VaadinIcon.FIRE.create(), e -> {
             double totalActual = mesaService.obtenerTodas().stream()
                 .filter(m -> m.getNumeroMesa() == mesa.getNumeroMesa())
@@ -195,13 +214,12 @@ public class GestionMesasView extends VerticalLayout {
         });
         btnCocina.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
 
-        // BOTÓN CANCELAR (Ahora sí aparecerá junto al de cocina)
+        // Botón para cerrar el diálogo. Si la mesa está vacía, se libera automáticamente.
         Button btnCancelar = new Button("CANCELAR / VOLVER", e -> {
             double totalActual = mesaService.obtenerTodas().stream()
                 .filter(m -> m.getNumeroMesa() == mesa.getNumeroMesa())
                 .findFirst().get().getTotalAcumulado();
             
-            // Si cancelamos y la mesa está vacía, la liberamos
             if (totalActual <= 0) {
                 mesaService.actualizarEstado(mesa.getNumeroMesa(), "LIBRE");
             }
@@ -210,7 +228,6 @@ public class GestionMesasView extends VerticalLayout {
         });
         btnCancelar.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ERROR);
 
-        // Agrupamos ambos botones en un layout para el footer
         HorizontalLayout footerLayout = new HorizontalLayout(btnCancelar, btnCocina);
         footerLayout.setWidthFull();
         footerLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
@@ -219,8 +236,12 @@ public class GestionMesasView extends VerticalLayout {
         pd.open();
     }
 
+    /**
+     * Crea un objeto Pedido y lo persiste para su gestión en cocina.
+     */
     private void registrarPedidoEnCocina(Mesa mesa) {
         Pedido pedido = new Pedido();
+        // Genera un ID de ticket legible pero único
         pedido.setTicketId("M" + mesa.getNumeroMesa() + "-" + UUID.randomUUID().toString().substring(0, 4).toUpperCase());
         pedido.setCliente("Mesa " + mesa.getNumeroMesa());
         pedido.setTipo("LOCAL");

@@ -1,8 +1,13 @@
 package com.example.application.model;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.*; // 👈 Importar anotaciones de validación
+import jakarta.validation.constraints.*;
 
+/*
+ * ENTIDAD USUARIO
+ * Representa a los usuarios del sistema (Clientes, Trabajadores, Admins).
+ * Implementa validaciones de Bean Validation para garantizar la integridad de los datos.
+ */
 @Entity
 @Table(name = "usuarios")
 public class Usuario {
@@ -11,22 +16,23 @@ public class Usuario {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // VALIDACIÓN: No vacío, tamaño y único
-    @Column(nullable = false, unique = true)
+    // Nombre de usuario (Login)
+    @Column(nullable = false, unique = true) // No nulo y único en la tabla
     @Size(min = 3, max = 50, message = "El nombre de usuario debe tener entre 3 y 50 caracteres.")
     @NotEmpty(message = "El nombre de usuario no puede estar vacío.")
-    private String nombre; // (username)
+    private String nombre; 
 
-    // VALIDACIÓN: No vacío, mínimo 6 caracteres
+    // Contraseña (debe almacenarse encriptada por el servicio)
     @Column(nullable = false)
     @Size(min = 6, message = "La contraseña debe tener al menos 6 caracteres.")
     @NotEmpty(message = "La contraseña no puede estar vacía.")
     private String contrasena;
     
+    // Rol del usuario: "CLIENTE", "TRABAJADOR", "ADMIN"
     @Column(nullable = false)
     private String rol; 
 
-    // VALIDACIÓN: No vacío, formato Email y único
+    // Correo electrónico de contacto
     @Column(nullable = false, unique = true)
     @Email(message = "Debe ser un formato de email válido.")
     @NotEmpty(message = "El email no puede estar vacío.")
@@ -41,7 +47,7 @@ public class Usuario {
         this.email = email;
     }
 
-    // --- Getters y Setters (resto del código sin cambios) ---
+    // --- Getters y Setters ---
     public Long getId() { return id; }
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }

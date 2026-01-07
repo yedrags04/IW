@@ -28,6 +28,10 @@ import jakarta.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+/* * VISTA DE ALTA DE USUARIOS (ADMIN)
+ * Permite al administrador crear nuevas cuentas de trabajadores o clientes.
+ * Utiliza Binder para enlazar los campos del formulario con el modelo Usuario.
+ */
 @PageTitle("Alta de Usuarios | Tu Food")
 @Route(value = "alta-usuarios", layout = MainLayout.class)
 @RolesAllowed("ADMIN")
@@ -35,6 +39,7 @@ public class AdminUserRegistrationView extends VerticalLayout {
 
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    // El Binder gestiona la sincronización de datos y las validaciones del Bean
     private final Binder<Usuario> binder = new BeanValidationBinder<>(Usuario.class);
 
     @Autowired
@@ -42,44 +47,29 @@ public class AdminUserRegistrationView extends VerticalLayout {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
 
-        addClassName("admin-registration-view");
         setSizeFull();
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.CENTER);
 
-        // --- TARJETA CONTENEDORA ---
         VerticalLayout card = new VerticalLayout();
-        card.addClassNames("perfil-card", "perfil-card-content");
-        card.setMaxWidth("550px"); // Reducido un poco para mayor estética
-        card.setPadding(true);
-        card.setSpacing(true);
+        card.addClassNames("perfil-card");
+        card.setMaxWidth("550px");
 
-        // Encabezado
         H2 title = new H2("Registrar Nuevo Usuario");
         Paragraph subtitle = new Paragraph("Complete los datos para dar de alta a un trabajador o cliente.");
-        title.addClassName("perfil-title");
 
-        // --- FORMULARIO ---
+        // CONFIGURACIÓN DE LOS CAMPOS DEL FORMULARIO
         FormLayout formLayout = new FormLayout();
-
         TextField nombre = new TextField("Nombre de Usuario");
-        nombre.setPrefixComponent(new Icon(VaadinIcon.USER));
-
-        TextField apellido = new TextField("Apellido");
-        apellido.setRequiredIndicatorVisible(true);
-
+        TextField apellido = new TextField("Apellido"); // Campo adicional no persistido
         EmailField email = new EmailField("Correo Electrónico");
-        email.setPrefixComponent(new Icon(VaadinIcon.ENVELOPE));
-
         PasswordField password = new PasswordField("Contraseña");
-        password.setPrefixComponent(new Icon(VaadinIcon.KEY));
-
+        
         Select<String> rol = new Select<>();
         rol.setLabel("Rol del Usuario");
         rol.setItems("TRABAJADOR", "CLIENTE", "ADMIN");
-        rol.setPlaceholder("Seleccione un rol");
 
-        // --- CONFIGURACIÓN DE VALIDACIONES (BINDER) ---
+        // VINCULACIÓN DE CAMPOS Y VALIDACIÓN
         binder.forField(nombre)
             .asRequired("El nombre es obligatorio")
             .withValidator(n -> n.length() >= 3, "Mínimo 3 caracteres")
@@ -87,69 +77,40 @@ public class AdminUserRegistrationView extends VerticalLayout {
 
         binder.forField(email)
             .asRequired("El email es obligatorio")
-            .withValidator(new com.vaadin.flow.data.validator.EmailValidator("Formato de email inválido"))
+            .withValidator(new com.vaadin.flow.data.validator.EmailValidator("Formato inválido"))
             .bind(Usuario::getEmail, Usuario::setEmail);
 
+        // La contraseña se encripta antes de guardarse en el objeto
         binder.forField(password)
-            .asRequired("La contraseña es obligatoria")
-            .withValidator(p -> p.length() >= 6, "Mínimo 6 caracteres")
+            .asRequired("Obligatorio")
             .bind(u -> "", (u, p) -> u.setContrasena(passwordEncoder.encode(p)));
 
-        binder.forField(rol)
-            .asRequired("Debe seleccionar un rol")
-            .bind(Usuario::getRol, Usuario::setRol);
+        binder.forField(rol).asRequired().bind(Usuario::getRol, Usuario::setRol);
 
         formLayout.add(nombre, apellido, email, password, rol);
-        formLayout.setColspan(email, 2);
-        formLayout.setColspan(password, 2);
-        formLayout.setColspan(rol, 2);
 
-        // --- BOTONES (REDISEÑADOS) ---
+        // BOTONES DE ACCIÓN
         Button btnAlta = new Button("Dar de Alta", new Icon(VaadinIcon.USER_CHECK));
         btnAlta.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        btnAlta.setMinWidth("150px");
 
-        Button btnCancelar = new Button("Cancelar");
-        btnCancelar.addThemeVariants(ButtonVariant.LUMO_TERTIARY); // Menos llamativo
-        btnCancelar.setMinWidth("120px");
+        Button btnCancelar = new Button("Cancelar", e -> UI.getCurrent().navigate(HomeView.class));
 
-        // Acción de Cancelar
-        // Acción de Cancelar: Redirige explícitamente a la clase HomeView
-        btnCancelar.addClickListener(e -> {
-            UI.getCurrent().navigate(HomeView.class);
-        });
-
-        // Acción de Guardar
+        // Lógica de guardado
         btnAlta.addClickListener(e -> {
             Usuario nuevoUsuario = new Usuario();
-            if (binder.writeBeanIfValid(nuevoUsuario) && !apellido.isEmpty()) {
+            // Comprobamos si el formulario cumple todas las reglas del Binder
+            if (binder.writeBeanIfValid(nuevoUsuario)) {
                 try {
                     usuarioRepository.save(nuevoUsuario);
-                    Notification.show("Usuario " + nuevoUsuario.getNombre() + " creado con éxito")
-                            .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-                    
-                    // Limpiar formulario
-                    binder.setBean(new Usuario());
-                    apellido.clear();
-                    
+                    Notification.show("Usuario creado").addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                    binder.setBean(new Usuario()); // Limpia el formulario
                 } catch (Exception ex) {
-                    Notification.show("Error: El nombre o email ya existen")
-                            .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                    Notification.show("Error: Nombre o Email duplicado").addThemeVariants(NotificationVariant.LUMO_ERROR);
                 }
-            } else {
-                if(apellido.isEmpty()) apellido.setInvalid(true);
-                Notification.show("Revise los campos obligatorios")
-                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
             }
         });
 
-        // Layout de botones alineados a la derecha y dentro de la tarjeta
         HorizontalLayout actions = new HorizontalLayout(btnCancelar, btnAlta);
-        actions.setWidthFull();
-        actions.setJustifyContentMode(JustifyContentMode.END); // Alineación a la derecha
-        actions.setSpacing(true);
-        actions.setPadding(false);
-
         card.add(title, subtitle, formLayout, actions);
         add(card);
     }

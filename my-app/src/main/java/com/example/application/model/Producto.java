@@ -8,68 +8,48 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 
+/*
+ * ENTIDAD PRODUCTO
+ * Representa los platos o bebidas del catálogo de TuFood.
+ * Incluye soporte para almacenamiento de imágenes binarias (BLOB).
+ */
 @Entity
 @Table(name = "producto")
 public class Producto {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long id;        // ID único del producto
 
-    private String nombre;
-    private double precio;
-    private String categoria;
+    private String nombre;    // Nombre del plato o bebida
+    private double precio;    // Precio unitario
+    private String categoria; // Categoría (Ej: Hamburguesas, Bebidas, Postres)
 
-    // --- NUEVO CAMPO PARA IMÁGENES ---
+    // Almacenamiento binario de la imagen del producto
+    // @Lob y LONGBLOB permiten guardar archivos de imagen pesados directamente en la BD
     @Lob
     @Column(name = "imagen_blob", columnDefinition = "LONGBLOB")
     private byte[] imagenBlob;
 
-    public Producto() {
-    }
+    public Producto() {}
 
     // --- Getters y Setters ---
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getNombre() { return nombre; }
+    public void setNombre(String nombre) { this.nombre = nombre; }
 
-    public String getNombre() {
-        return nombre;
-    }
+    public double getPrecio() { return precio; }
+    public void setPrecio(double precio) { this.precio = precio; }
 
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
+    public String getCategoria() { return categoria; }
+    public void setCategoria(String categoria) { this.categoria = categoria; }
 
-    public double getPrecio() {
-        return precio;
-    }
+    public byte[] getImagenBlob() { return imagenBlob; }
+    public void setImagenBlob(byte[] imagenBlob) { this.imagenBlob = imagenBlob; }
 
-    public void setPrecio(double precio) {
-        this.precio = precio;
-    }
-
-    public String getCategoria() {
-        return categoria;
-    }
-
-    public void setCategoria(String categoria) {
-        this.categoria = categoria;
-    }
-
-    public byte[] getImagenBlob() {
-        return imagenBlob;
-    }
-
-    public void setImagenBlob(byte[] imagenBlob) {
-        this.imagenBlob = imagenBlob;
-    }
-
-    // --- Métodos de comparación para colecciones (Set/List) ---
+    // Métodos equals y hashCode basados en el ID para asegurar la unicidad en colecciones (Sets/Lists)
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

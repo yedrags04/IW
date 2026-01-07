@@ -22,6 +22,10 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Vista de seguimiento simplificada para el cliente.
+ * Implementa BeforeEnterObserver para validar el acceso y capturar parámetros de URL.
+ */
 @PageTitle("Seguimiento de Pedido | TuFood")
 @Route(value = "seguimientoCliente", layout = MainLayout.class)
 @AnonymousAllowed 
@@ -40,7 +44,7 @@ public class SeguimientoClienteView extends VerticalLayout implements BeforeEnte
         setHeightFull();
         getStyle().set("background-color", "var(--lumo-contrast-5pct)");
 
-        // Tarjeta principal
+        // Tarjeta principal de información
         VerticalLayout card = new VerticalLayout();
         card.setMaxWidth("700px");
         card.addClassNames(LumoUtility.Background.BASE, LumoUtility.BorderRadius.LARGE, 
@@ -50,7 +54,8 @@ public class SeguimientoClienteView extends VerticalLayout implements BeforeEnte
         title.getStyle().set("color", "var(--lumo-primary-color)");
         idPedidoLabel.addClassNames(LumoUtility.TextColor.SECONDARY, LumoUtility.FontSize.SMALL);
         
-        HorizontalLayout stepper = createStepper(2); // Simula paso actual
+        // Indicador de progreso (Simulamos que está en el paso 2: Cocinando)
+        HorizontalLayout stepper = createStepper(2); 
 
         statusContainer.setSpacing(false);
         statusContainer.setPadding(false);
@@ -59,9 +64,12 @@ public class SeguimientoClienteView extends VerticalLayout implements BeforeEnte
         add(card);
     }
 
+    /**
+     * Lógica que se ejecuta justo antes de entrar a la vista.
+     */
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        // Bloqueo para trabajadores
+        // SEGURIDAD: Si un trabajador intenta entrar aquí, lo redirigimos a su panel de gestión
         if (authService.isUserLoggedIn() && authService.isWorker()) {
             Notification n = Notification.show("Acceso denegado: Los trabajadores deben gestionar pedidos desde el panel de sala.");
             n.addThemeVariants(NotificationVariant.LUMO_ERROR);
@@ -69,6 +77,7 @@ public class SeguimientoClienteView extends VerticalLayout implements BeforeEnte
             return;
         }
 
+        // Recuperar parámetros de la URL (?metodo=TARJETA&direccion=Calle...)
         Map<String, List<String>> params = event.getLocation().getQueryParameters().getParameters();
         String metodo = params.getOrDefault("metodo", List.of("No especificado")).get(0);
         String direccion = params.getOrDefault("direccion", List.of("Recogida en tienda")).get(0);
@@ -87,6 +96,9 @@ public class SeguimientoClienteView extends VerticalLayout implements BeforeEnte
         idPedidoLabel.setText("Tu pedido está siendo procesado en tiempo real");
     }
 
+    /**
+     * Crea la barra de progreso visual con iconos.
+     */
     private HorizontalLayout createStepper(int stepActivo) {
         HorizontalLayout layout = new HorizontalLayout();
         layout.setWidthFull();
@@ -108,6 +120,7 @@ public class SeguimientoClienteView extends VerticalLayout implements BeforeEnte
 
         Icon i = icon.create();
         i.setSize("32px");
+        // Cambia el color si el paso ya se ha completado
         i.setColor(completado ? "var(--lumo-primary-color)" : "var(--lumo-contrast-20pct)");
         
         Span s = new Span(label);
