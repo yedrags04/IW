@@ -1,5 +1,6 @@
 package com.example.application.views;
 
+import com.example.application.model.AppConfig;
 import com.example.application.security.AuthService;
 import com.example.application.views.main.HomeView;
 import com.example.application.views.mesas.GestionMesasView;
@@ -7,6 +8,7 @@ import com.example.application.views.productos.ProductosView;
 import com.example.application.views.productos.AddProductView;
 import com.example.application.views.tufood.TuFoodView;
 import com.example.application.views.perfil.PerfilView;
+import com.example.application.views.config.ConfiguracionView;
 import com.example.application.views.dardealta.AdminUserRegistrationView;
 import com.example.application.views.estadisticas.EstadisticasView;
 import com.example.application.views.login.LoginFlipView;
@@ -30,6 +32,7 @@ import com.vaadin.flow.server.menu.MenuConfiguration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.example.application.repository.AppConfigRepository;
 
 @Layout
 @AnonymousAllowed
@@ -40,12 +43,22 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
     private H1 viewTitle;
     private final AuthService authService;
 
-    public MainLayout(AuthService authService) {
+    public MainLayout(AuthService authService, AppConfigRepository configRepo) {
         this.authService = authService;
-        
-        setPrimarySection(Section.DRAWER);
-        setDrawerOpened(false); 
+        AppConfig config = configRepo.findById(1L).orElse(new AppConfig());
 
+        // Esto cambia el color de todos los botones y elementos naranja de la app
+        UI.getCurrent().getElement().executeJs(
+            "document.documentElement.style.setProperty('--lumo-primary-color', $0);", 
+            config.getColorPrimario()
+        );
+
+        // Cambiar el nombre en el Drawer
+        // Donde tenías Span appName = new Span("TuFood App");
+        // Ahora pon:
+        Span appName = new Span(config.getNombreApp());
+
+        setPrimarySection(Section.DRAWER);
         addDrawerContent();
         addHeaderContent();
     }
@@ -127,7 +140,7 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
             nav.addItem(new SideNavItem("Alta Usuarios", AdminUserRegistrationView.class, VaadinIcon.PLUS.create()));
             nav.addItem(new SideNavItem("Gestión Mesas", GestionMesasView.class, VaadinIcon.TABLE.create()));
             nav.addItem(new SideNavItem("Gestión Pedidos", TuFoodView.class, LineAwesomeIcon.UTENSILS_SOLID.create()));
-
+            nav.addItem(new SideNavItem("Personalizar Web", ConfiguracionView.class, LineAwesomeIcon.COG_SOLID.create()));
         }
 
         if (authService.isWorker()) {

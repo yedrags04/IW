@@ -1,5 +1,6 @@
 package com.example.application.views.main;
 
+import com.example.application.model.AppConfig;
 import com.example.application.model.Producto;
 import com.example.application.repository.ProductoRepository;
 import com.example.application.security.AuthService;
@@ -17,6 +18,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.QueryParameters;
 import com.vaadin.flow.router.Route;
+import com.example.application.repository.AppConfigRepository;
 import java.util.List;
 import java.util.Map;
 
@@ -28,10 +30,12 @@ public class HomeView extends VerticalLayout {
     private final ShoppingCartService cartService;
     private final AuthService authService;
 
-    public HomeView(ProductoRepository productoRepository, ShoppingCartService cartService, AuthService authService) {
+    public HomeView(ProductoRepository productoRepository, ShoppingCartService cartService, AuthService authService, AppConfigRepository configRepo) {
         this.productoRepository = productoRepository;
         this.cartService = cartService;
         this.authService = authService;
+
+        AppConfig config = configRepo.findById(1L).orElse(new AppConfig());
 
         addClassName("home-view");
         setPadding(false);
