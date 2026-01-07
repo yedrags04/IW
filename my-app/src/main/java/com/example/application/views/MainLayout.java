@@ -34,6 +34,10 @@ import org.vaadin.lineawesome.LineAwesomeIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.example.application.repository.AppConfigRepository;
 
+/**
+ * Layout principal de la aplicación. 
+ * Gestiona la interfaz dinámica: muestra u oculta botones y menús según el estado del AuthService.
+ */
 @Layout
 @AnonymousAllowed
 public class MainLayout extends AppLayout implements AfterNavigationObserver {
@@ -44,10 +48,12 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
 
     public MainLayout(AuthService authService, AppConfigRepository configRepo) {
         this.authService = authService;
+        
+        // Carga de configuración estética desde BD
         AppConfig config = configRepo.findById(1L).orElse(new AppConfig());
         this.appNameText = config.getNombreApp() != null ? config.getNombreApp() : "TuFood App";
 
-        // Aplicar color primario dinámico
+        // Aplicación del color corporativo dinámico
         UI.getCurrent().getElement().executeJs(
             "document.documentElement.style.setProperty('--lumo-primary-color', $0);", 
             config.getColorPrimario()
@@ -58,6 +64,9 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
         addHeaderContent();
     }
 
+    /**
+     * Construye la barra superior con lógica de visibilidad para el usuario.
+     */
     private void addHeaderContent() {
         DrawerToggle toggle = new DrawerToggle();
         toggle.setAriaLabel("Menu toggle");
@@ -65,21 +74,31 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
         viewTitle = new H1();
         viewTitle.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.Margin.NONE);
 
-        Button cartBtn = new Button(VaadinIcon.CART.create());
-        cartBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        cartBtn.addClickListener(e -> UI.getCurrent().navigate("carrito"));
-
-        Button personBtn = new Button(VaadinIcon.USER.create());
-        personBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        personBtn.addClickListener(e -> UI.getCurrent().navigate(PerfilView.class)); 
-
-        Button logoutBtn = new Button("Salir", VaadinIcon.SIGN_OUT.create());
-        logoutBtn.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
-        logoutBtn.addClickListener(e -> confirmarSalida());
-
-        HorizontalLayout actionLayout = new HorizontalLayout(cartBtn, personBtn, logoutBtn);
+        HorizontalLayout actionLayout = new HorizontalLayout();
         actionLayout.addClassNames(LumoUtility.Margin.Left.AUTO, LumoUtility.AlignItems.CENTER);
         actionLayout.setSpacing(true);
+
+        // --- LÓGICA DE BOTONES DINÁMICOS ---
+        if (authService.isUserLoggedIn()) {
+            // Si hay sesión: Carrito, Perfil y Salir
+            Button cartBtn = new Button(VaadinIcon.CART.create(), e -> UI.getCurrent().navigate("carrito"));
+            cartBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+
+            Button personBtn = new Button(VaadinIcon.USER.create(), e -> UI.getCurrent().navigate(PerfilView.class));
+            personBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+
+            Button logoutBtn = new Button("Salir", VaadinIcon.SIGN_OUT.create(), e -> confirmarSalida());
+            logoutBtn.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
+
+            actionLayout.add(cartBtn, personBtn, logoutBtn);
+        } else {
+            // Si NO hay sesión: Botón prominente de Iniciar Sesión
+            Button loginBtn = new Button("Iniciar sesión", VaadinIcon.SIGN_IN.create(), 
+                e -> UI.getCurrent().navigate(LoginFlipView.class));
+            loginBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+            
+            actionLayout.add(loginBtn);
+        }
 
         Header header = new Header(toggle, viewTitle, actionLayout);
         header.addClassNames(LumoUtility.Display.FLEX, LumoUtility.AlignItems.CENTER, LumoUtility.Padding.Horizontal.MEDIUM);
@@ -88,6 +107,9 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
         addToNavbar(true, header);
     }
 
+    /**
+     * Diálogo de confirmación para cerrar sesión.
+     */
     private void confirmarSalida() {
         Dialog dialog = new Dialog();
         dialog.setHeaderTitle("Cerrar Sesión");
@@ -95,10 +117,11 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
         VerticalLayout dialogLayout = new VerticalLayout(new Span("¿Estás seguro de que deseas salir de " + appNameText + "?"));
         dialog.add(dialogLayout);
 
-        Button logoutButton = new Button("Sí", VaadinIcon.SIGN_OUT.create(), e -> {
+        Button logoutButton = new Button("Sí, salir", VaadinIcon.SIGN_OUT.create(), e -> {
             authService.logout();
-            UI.getCurrent().navigate(LoginFlipView.class);
             dialog.close();
+            // Recargamos a la página de login para limpiar el estado de la UI
+            UI.getCurrent().getPage().setLocation("login");
         });
         logoutButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_ERROR);
 
@@ -119,17 +142,22 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
         addToDrawer(header, scroller, createFooter());
     }
 
+    /**
+     * Menú lateral filtrado por autenticación y roles.
+     */
     private SideNav createNavigation() {
         SideNav nav = new SideNav();
 
-        // Vistas públicas / Clientes
+        // Items para TODOS (Público)
         nav.addItem(new SideNavItem("Inicio", HomeView.class, LineAwesomeIcon.HOME_SOLID.create()));
         nav.addItem(new SideNavItem("Productos", ProductosView.class, LineAwesomeIcon.LIST_SOLID.create()));
-        nav.addItem(new SideNavItem("Mi Perfil", PerfilView.class, LineAwesomeIcon.USER_SOLID.create()));
         
-        // NOTA: SeguimientoClienteView NO se añade aquí para que sea invisible en el menú lateral.
+        // Item Mi Perfil: SOLO si está logueado
+        if (authService.isUserLoggedIn()) {
+            nav.addItem(new SideNavItem("Mi Perfil", PerfilView.class, LineAwesomeIcon.USER_SOLID.create()));
+        }
 
-        // Vistas de Admin
+        // Vistas de ADMINISTRADOR
         if (authService.isAdmin()) {
             nav.addItem(new SideNavItem("Añadir Producto", AddProductView.class, LineAwesomeIcon.PLUS_CIRCLE_SOLID.create()));
             nav.addItem(new SideNavItem("Estadísticas", EstadisticasView.class, LineAwesomeIcon.CHART_BAR_SOLID.create()));
@@ -139,7 +167,7 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
             nav.addItem(new SideNavItem("Personalizar Web", ConfiguracionView.class, LineAwesomeIcon.COG_SOLID.create()));
         }
 
-        // Vistas de Trabajador
+        // Vistas de TRABAJADOR
         if (authService.isWorker()) {
             nav.addItem(new SideNavItem("Gestión Mesas", GestionMesasView.class, VaadinIcon.TABLE.create()));
             nav.addItem(new SideNavItem("Gestión Pedidos", TuFoodView.class, LineAwesomeIcon.UTENSILS_SOLID.create()));
@@ -151,10 +179,10 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
     private Footer createFooter() {
         Footer footer = new Footer();
         if (authService.isUserLoggedIn()) {
-            Object nameAttr = com.vaadin.flow.server.VaadinSession.getCurrent().getAttribute(AuthService.USERNAME_SESSION_ATTRIBUTE);
-            String userName = nameAttr != null ? nameAttr.toString() : "Usuario";
+            String userName = (String) com.vaadin.flow.server.VaadinSession.getCurrent()
+                                .getAttribute(AuthService.USERNAME_SESSION_ATTRIBUTE);
             
-            footer.add(new Span("Sesión: " + userName));
+            footer.add(new Span("Sesión: " + (userName != null ? userName : "Usuario")));
             footer.addClassNames(LumoUtility.FontSize.XSMALL, LumoUtility.Padding.MEDIUM, LumoUtility.TextColor.SECONDARY);
         }
         return footer;
