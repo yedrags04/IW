@@ -31,6 +31,8 @@ public class ConfiguracionView extends VerticalLayout {
         // Buscamos la configuración con ID 1 (única fila de config)
         this.config = repository.findById(1L).orElse(new AppConfig());
 
+        addClassName("config-view-container");
+
         setAlignItems(Alignment.CENTER);
 
         VerticalLayout card = new VerticalLayout();

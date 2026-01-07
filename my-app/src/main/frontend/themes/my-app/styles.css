@@ -789,3 +789,25 @@ header vaadin-button[theme~="error"]:hover {
     border-radius: 4px;
     margin: 20px 0;
 }
+
+/* --- AJUSTES PARA LA VISTA DE CONFIGURACIÓN --- */
+.config-view-container {
+    /* Esto empuja todo el contenido hacia abajo para que no choque con el header */
+    padding-top: 100px !important; 
+    background-color: var(--lumo-contrast-5pct); /* Fondo gris muy suave */
+    min-height: 100vh;
+}
+
+.config-view-container .perfil-card {
+    background-color: white;
+    padding: 30px;
+    border-radius: var(--lumo-border-radius-l);
+    box-shadow: var(--lumo-box-shadow-m);
+    /* Aseguramos que los campos tengan espacio */
+    gap: 20px;
+}
+
+/* Opcional: para que el botón de guardar no esté pegado a los campos */
+.config-view-container vaadin-button {
+    margin-top: 25px;
+}
