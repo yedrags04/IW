@@ -15,17 +15,22 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 
-@Route(value = "", layout = EmptyLayout.class) 
+@PageTitle("Acceso | TuFood")
+@Route(value = "login", layout = EmptyLayout.class) // CORREGIDO: "login" en lugar de ""
+@AnonymousAllowed // Permite que cualquiera vea esta página
 @CssImport("./styles/style.css") 
 @StyleSheet("https://fonts.googleapis.com/css?family=Montserrat:400,700") 
 public class LoginFlipView extends VerticalLayout {
 
     private final AuthService authService; 
-    private Div container; // Declarado aquí para que sea accesible en todos los métodos
+    private Div container; 
 
+    // Clase interna para el formulario de registro
     public class RegistrationForm {
         private String name;
         private String email;
@@ -39,6 +44,7 @@ public class LoginFlipView extends VerticalLayout {
         public void setPassword(String password) { this.password = password; }
     }
 
+    // Constantes SVG para la interfaz
     private static final String SVG_USER_PLUS = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"96\" height=\"96\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2\"/><circle cx=\"8.5\" cy=\"7\" r=\"4\"/><line x1=\"20\" y1=\"8\" x2=\"20\" y2=\"14\"/><line x1=\"23\" y1=\"11\" x2=\"17\" y2=\"11\"/></svg>";
     private static final String SVG_ARROW_RIGHT = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><polyline points=\"12 16 16 12 12 8\"/><line x1=\"8\" y1=\"12\" x2=\"16\" y2=\"12\"/></svg>";
     private static final String SVG_LOG_IN = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"96\" height=\"96\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4\"/><polyline points=\"10 17 15 12 10 7\"/><line x1=\"15\" y1=\"12\" x2=\"3\" y2=\"12\"/></svg>";
@@ -76,7 +82,7 @@ public class LoginFlipView extends VerticalLayout {
             createLoginPanel(),
             createRegisterPanel(),
             createPageFront(registerButton),
-            createPageBack(flipLoginButton) // Se pasa el botón como argumento
+            createPageBack(flipLoginButton)
         );
         
         add(container);
@@ -105,7 +111,7 @@ public class LoginFlipView extends VerticalLayout {
         
         loginBtn.addClickListener(e -> {
             if (authService.authenticate(username.getValue(), password.getValue())) {
-                UI.getCurrent().navigate("home"); 
+                UI.getCurrent().navigate(""); // Navega a la Home (ruta vacía)
             } else {
                 errorLabel.setVisible(true);
             }
@@ -168,8 +174,6 @@ public class LoginFlipView extends VerticalLayout {
         signUpBtn.setWidthFull();
         signUpBtn.getStyle().set("margin-top", "2.5rem"); 
 
-        
-
         Binder<RegistrationForm> binder = new Binder<>(RegistrationForm.class);
 
         signUpBtn.addClickListener(event -> {
@@ -192,10 +196,9 @@ public class LoginFlipView extends VerticalLayout {
             }
         });
 
-    Html socialIcons = new Html("<div class='social-icons'>" + SVG_SOCIAL_FB + SVG_SOCIAL_TWITTER + SVG_SOCIAL_GITHUB + SVG_SOCIAL_LINKEDIN + "</div>");
-    content.add(title, name, email, password, signUpBtn, feedbackLabel, socialIcons);
-    registerPanel.add(content);
-    return registerPanel;
-}
-
+        Html socialIcons = new Html("<div class='social-icons'>" + SVG_SOCIAL_FB + SVG_SOCIAL_TWITTER + SVG_SOCIAL_GITHUB + SVG_SOCIAL_LINKEDIN + "</div>");
+        content.add(title, name, email, password, signUpBtn, feedbackLabel, socialIcons);
+        registerPanel.add(content);
+        return registerPanel;
+    }
 }

@@ -19,15 +19,12 @@ vaadin-side-nav-item vaadin-icon {
   display: none;
 }
 
-/* --- SOLUCIÓN AL SOLAPAMIENTO --- */
 
-/* Esta regla obliga al área de contenido de TODAS las vistas a bajar */
 vaadin-app-layout::part(content) {
   padding-top: var(--lumo-size-xl) !important;
   box-sizing: border-box;
 }
 
-/* Opcional: Asegura que la barra de navegación tenga un fondo sólido y borde */
 vaadin-app-layout [slot="navbar"] {
   background-color: var(--lumo-base-color);
   border-bottom: 1px solid var(--lumo-contrast-10pct);
@@ -37,28 +34,23 @@ vaadin-app-layout [slot="navbar"] {
 vaadin-app-layout [slot="navbar"] {
     position: relative; 
     z-index: 2;
-    background-color: white; /* O var(--lumo-base-color) */
+    background-color: white; 
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
-/* --- REFUERZO DE CAPAS (Z-INDEX) --- */
 
-/* Forzamos que el Drawer (menú lateral) sea la capa más alta */
 vaadin-app-layout::part(drawer) {
     z-index: 200 !important;
 }
 
-/* El fondo oscuro cuando el menú está abierto */
 vaadin-app-layout::part(backdrop) {
     z-index: 150 !important;
 }
 
-/* El Navbar debe estar por encima del contenido pero por debajo del Drawer */
 vaadin-app-layout [slot="navbar"] {
     z-index: 100 !important;
 }
 
-/* Ajuste específico para que el scroll del contenido no se "coma" el título */
 vaadin-app-layout::part(content) {
-    padding-top: 80px !important; /* Aumentado para dar aire bajo el Navbar */
+    padding-top: 80px !important;
     background-color: var(--lumo-contrast-5pct);
 }
