@@ -15,16 +15,20 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 
-@Route(value = "", layout = EmptyLayout.class) 
+@PageTitle("Acceso | TuFood")
+@Route(value = "login", layout = EmptyLayout.class) 
+@AnonymousAllowed 
 @CssImport("./styles/style.css") 
 @StyleSheet("https://fonts.googleapis.com/css?family=Montserrat:400,700") 
 public class LoginFlipView extends VerticalLayout {
 
     private final AuthService authService; 
-    private Div container; // Declarado aquí para que sea accesible en todos los métodos
+    private Div container;
 
     public class RegistrationForm {
         private String name;
@@ -59,12 +63,10 @@ public class LoginFlipView extends VerticalLayout {
         container = new Div(); 
         container.setId("container"); 
 
-        // Botón para ir al registro (estará en el panel naranja frontal)
         Button registerButton = new Button("Registrarse", new Html(SVG_ARROW_RIGHT));
         registerButton.setId("register"); 
         registerButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
         
-        // Botón para volver al login (estará en el panel naranja trasero)
         Button flipLoginButton = new Button("Iniciar sesión", new Html(SVG_ARROW_LEFT));
         flipLoginButton.setId("login"); 
         flipLoginButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
@@ -76,7 +78,7 @@ public class LoginFlipView extends VerticalLayout {
             createLoginPanel(),
             createRegisterPanel(),
             createPageFront(registerButton),
-            createPageBack(flipLoginButton) // Se pasa el botón como argumento
+            createPageBack(flipLoginButton)
         );
         
         add(container);
@@ -88,7 +90,6 @@ public class LoginFlipView extends VerticalLayout {
         loginPanel.addClassName("login");
 
         H1 title = new H1("¡Bienvenido!");
-        title.getStyle().set("margin-bottom", "20px");
         
         TextField username = new TextField("Usuario"); 
         username.setWidthFull(); 
@@ -105,7 +106,7 @@ public class LoginFlipView extends VerticalLayout {
         
         loginBtn.addClickListener(e -> {
             if (authService.authenticate(username.getValue(), password.getValue())) {
-                UI.getCurrent().navigate("home"); 
+                UI.getCurrent().navigate(""); // Redirige a la Home real
             } else {
                 errorLabel.setVisible(true);
             }
@@ -145,30 +146,22 @@ public class LoginFlipView extends VerticalLayout {
         content.setHeightFull();
         content.setJustifyContentMode(JustifyContentMode.CENTER); 
         content.setAlignItems(Alignment.CENTER);
-        content.setSpacing(true);
 
         H1 title = new H1("Sign Up");
 
         TextField name = new TextField("Nombre");
-        name.setPrefixComponent(VaadinIcon.USER.create());
         name.setWidthFull();
         TextField email = new TextField("Email");
-        email.setPrefixComponent(VaadinIcon.ENVELOPE.create());
         email.setWidthFull();
         PasswordField password = new PasswordField("Contraseña");
-        password.setPrefixComponent(VaadinIcon.LOCK.create());
         password.setWidthFull();
 
         Div feedbackLabel = new Div();
-        feedbackLabel.getStyle().set("font-size", "0.8rem").set("margin", "5px 0");
         feedbackLabel.setVisible(false);
 
         Button signUpBtn = new Button("Crear Cuenta");
         signUpBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
         signUpBtn.setWidthFull();
-        signUpBtn.getStyle().set("margin-top", "2.5rem"); 
-
-        
 
         Binder<RegistrationForm> binder = new Binder<>(RegistrationForm.class);
 
@@ -192,10 +185,9 @@ public class LoginFlipView extends VerticalLayout {
             }
         });
 
-    Html socialIcons = new Html("<div class='social-icons'>" + SVG_SOCIAL_FB + SVG_SOCIAL_TWITTER + SVG_SOCIAL_GITHUB + SVG_SOCIAL_LINKEDIN + "</div>");
-    content.add(title, name, email, password, signUpBtn, feedbackLabel, socialIcons);
-    registerPanel.add(content);
-    return registerPanel;
-}
-
+        Html socialIcons = new Html("<div class='social-icons'>" + SVG_SOCIAL_FB + SVG_SOCIAL_TWITTER + SVG_SOCIAL_GITHUB + SVG_SOCIAL_LINKEDIN + "</div>");
+        content.add(title, name, email, password, signUpBtn, feedbackLabel, socialIcons);
+        registerPanel.add(content);
+        return registerPanel;
+    }
 }

@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 @PageTitle("Inicio | Tu Food")
-@Route(value = "home", layout = MainLayout.class)
+@Route(value = "", layout = MainLayout.class)
 public class HomeView extends VerticalLayout {
 
     private final ProductoRepository productoRepository;
