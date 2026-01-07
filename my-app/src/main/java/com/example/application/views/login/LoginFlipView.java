@@ -20,16 +20,23 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 
+/**
+ * VISTA DE LOGIN CON EFECTO FLIP (GIRATORIO)
+ * Proporciona una interfaz dual para Iniciar Sesión y Registrarse en una sola pantalla.
+ */
 @PageTitle("Acceso | TuFood")
-@Route(value = "login", layout = EmptyLayout.class) 
-@AnonymousAllowed 
-@CssImport("./styles/style.css") 
+@Route(value = "login", layout = EmptyLayout.class) // Usa layout vacío para no mostrar el menú lateral
+@AnonymousAllowed // Permite el acceso a usuarios no logueados
+@CssImport("./styles/style.css") // Importa los estilos para la animación de giro
 @StyleSheet("https://fonts.googleapis.com/css?family=Montserrat:400,700") 
 public class LoginFlipView extends VerticalLayout {
 
     private final AuthService authService; 
-    private Div container;
+    private Div container; // Contenedor principal que rotará mediante CSS
 
+    /**
+     * Clase interna para mapear los datos del formulario de registro.
+     */
     public class RegistrationForm {
         private String name;
         private String email;
@@ -43,6 +50,8 @@ public class LoginFlipView extends VerticalLayout {
         public void setPassword(String password) { this.password = password; }
     }
 
+    // --- ICONOS SVG ---
+    // Definidos como constantes para mantener el constructor limpio
     private static final String SVG_USER_PLUS = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"96\" height=\"96\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2\"/><circle cx=\"8.5\" cy=\"7\" r=\"4\"/><line x1=\"20\" y1=\"8\" x2=\"20\" y2=\"14\"/><line x1=\"23\" y1=\"11\" x2=\"17\" y2=\"11\"/></svg>";
     private static final String SVG_ARROW_RIGHT = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><polyline points=\"12 16 16 12 12 8\"/><line x1=\"8\" y1=\"12\" x2=\"16\" y2=\"12\"/></svg>";
     private static final String SVG_LOG_IN = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"96\" height=\"96\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4\"/><polyline points=\"10 17 15 12 10 7\"/><line x1=\"15\" y1=\"12\" x2=\"3\" y2=\"12\"/></svg>";
@@ -60,9 +69,11 @@ public class LoginFlipView extends VerticalLayout {
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.CENTER);
 
+        // Estructura de la tarjeta
         container = new Div(); 
         container.setId("container"); 
 
+        // Botones de intercambio (Flip)
         Button registerButton = new Button("Registrarse", new Html(SVG_ARROW_RIGHT));
         registerButton.setId("register"); 
         registerButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
@@ -71,20 +82,24 @@ public class LoginFlipView extends VerticalLayout {
         flipLoginButton.setId("login"); 
         flipLoginButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
 
+        // LÓGICA DE GIRO: Añade o quita la clase CSS 'active' para disparar la animación
         registerButton.addClickListener(event -> container.addClassName("active"));
         flipLoginButton.addClickListener(event -> container.removeClassName("active")); 
         
         container.add(
-            createLoginPanel(),
-            createRegisterPanel(),
-            createPageFront(registerButton),
-            createPageBack(flipLoginButton)
+            createLoginPanel(),      // Cara frontal (Inputs)
+            createRegisterPanel(),   // Cara trasera (Inputs)
+            createPageFront(registerButton), // Panel lateral frontal (Informativo)
+            createPageBack(flipLoginButton)  // Panel lateral trasero (Informativo)
         );
         
         add(container);
-        getElement().getStyle().set("perspective", "1500px");
+        getElement().getStyle().set("perspective", "1500px"); // Profundidad 3D para el giro
     }
     
+    /**
+     * Crea el panel de inicio de sesión.
+     */
     private Div createLoginPanel() {
         Div loginPanel = new Div();
         loginPanel.addClassName("login");
@@ -104,11 +119,12 @@ public class LoginFlipView extends VerticalLayout {
         loginBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
         loginBtn.setWidthFull();
         
+        // Ejecuta la autenticación manual mediante el AuthService
         loginBtn.addClickListener(e -> {
             if (authService.authenticate(username.getValue(), password.getValue())) {
-                UI.getCurrent().navigate(""); // Redirige a la Home real
+                UI.getCurrent().navigate(""); // Redirige a la raíz de la aplicación
             } else {
-                errorLabel.setVisible(true);
+                errorLabel.setVisible(true); // Muestra error si falla
             }
         });
 
@@ -117,6 +133,9 @@ public class LoginFlipView extends VerticalLayout {
         return loginPanel;
     }
 
+    /**
+     * Paneles decorativos que acompañan al formulario.
+     */
     private Div createPageFront(Button btn) {
         Div pageFront = new Div();
         pageFront.addClassNames("page", "front");
@@ -137,6 +156,9 @@ public class LoginFlipView extends VerticalLayout {
         return pageBack;
     }
     
+    /**
+     * Crea el panel de registro de nuevos clientes.
+     */
     private Div createRegisterPanel() {
         Div registerPanel = new Div();
         registerPanel.addClassName("register");
@@ -163,19 +185,21 @@ public class LoginFlipView extends VerticalLayout {
         signUpBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
         signUpBtn.setWidthFull();
 
+        // El Binder sincroniza los campos del formulario con el objeto Java
         Binder<RegistrationForm> binder = new Binder<>(RegistrationForm.class);
 
         signUpBtn.addClickListener(event -> {
             RegistrationForm formBean = new RegistrationForm();
             try {
-                binder.writeBean(formBean);
+                binder.writeBean(formBean); // Extrae los datos de los campos
+                // Llama al registro del AuthService
                 String result = authService.register(name.getValue(), email.getValue(), password.getValue());
                 if ("SUCCESS".equals(result)) {
                     Notification.show("¡Éxito! Inicie sesión.");
-                    container.removeClassName("active"); 
-                    binder.readBean(new RegistrationForm()); 
+                    container.removeClassName("active"); // Vuelve a la cara de Login automáticamente
+                    binder.readBean(new RegistrationForm()); // Limpia el formulario
                 } else {
-                    feedbackLabel.setText(result);
+                    feedbackLabel.setText(result); // Muestra error de la BD (ej: usuario duplicado)
                     feedbackLabel.getStyle().set("color", "red");
                     feedbackLabel.setVisible(true);
                 }

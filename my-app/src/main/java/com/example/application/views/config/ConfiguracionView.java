@@ -14,9 +14,13 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.RolesAllowed;
 
-@PageTitle("Configuración del Sistema | Tu Food")
+/**
+ * Vista de configuración global.
+ * Permite al administrador cambiar la identidad visual de la web.
+ */
+@PageTitle("Configuración | Tu Food")
 @Route(value = "configuracion", layout = MainLayout.class)
-@RolesAllowed("ADMIN")
+@RolesAllowed("ADMIN") // Solo accesible por administradores
 public class ConfiguracionView extends VerticalLayout {
 
     private final AppConfigRepository repository;
@@ -24,9 +28,9 @@ public class ConfiguracionView extends VerticalLayout {
 
     public ConfiguracionView(AppConfigRepository repository) {
         this.repository = repository;
+        // Buscamos la configuración con ID 1 (única fila de config)
         this.config = repository.findById(1L).orElse(new AppConfig());
 
-        addClassName("perfil-view");
         setAlignItems(Alignment.CENTER);
 
         VerticalLayout card = new VerticalLayout();
@@ -35,20 +39,22 @@ public class ConfiguracionView extends VerticalLayout {
 
         H2 title = new H2("Personalizar Apariencia");
 
+        // Formulario de edición
         FormLayout form = new FormLayout();
-        TextField nombreField = new TextField("Nombre de la Marca", config.getNombreApp(), "");
-        TextField colorField = new TextField("Color Primario (Hexadecimal)", config.getColorPrimario(), "");
-        TextField heroTitleField = new TextField("Título Principal (Hero)", config.getHeroTitulo(), "");
-        TextField heroSubField = new TextField("Subtítulo Principal", config.getHeroSubtitulo(), "");
+        TextField nombreField = new TextField("Nombre de la Marca", config.getNombreApp());
+        TextField colorField = new TextField("Color Primario (Hex)", config.getColorPrimario());
+        TextField heroTitleField = new TextField("Título Hero", config.getHeroTitulo());
+        TextField heroSubField = new TextField("Subtítulo Hero", config.getHeroSubtitulo());
 
         Button btnGuardar = new Button("Guardar Cambios", e -> {
+            // Actualizamos el objeto con los valores de los campos
             config.setNombreApp(nombreField.getValue());
             config.setColorPrimario(colorField.getValue());
             config.setHeroTitulo(heroTitleField.getValue());
             config.setHeroSubtitulo(heroSubField.getValue());
             
-            repository.save(config);
-            Notification.show("Configuración actualizada. Recarga para aplicar cambios.");
+            repository.save(config); // Persistencia en BD
+            Notification.show("Configuración guardada. Recarga la página para ver los cambios.");
         });
         btnGuardar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
