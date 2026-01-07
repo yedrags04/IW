@@ -169,7 +169,7 @@ public class LoginFlipView extends VerticalLayout {
         content.setJustifyContentMode(JustifyContentMode.CENTER); 
         content.setAlignItems(Alignment.CENTER);
 
-        H1 title = new H1("Sign Up");
+        H1 title = new H1("¡Registrate!");
 
         TextField name = new TextField("Nombre");
         name.setWidthFull();
