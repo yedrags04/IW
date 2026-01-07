@@ -5,6 +5,7 @@ import com.example.application.security.AuthService;
 import com.example.application.views.main.HomeView;
 import com.example.application.views.mesas.GestionMesasView;
 import com.example.application.views.productos.ProductosView;
+import com.example.application.views.seguimiento.SeguimientoClienteView;
 import com.example.application.views.productos.AddProductView;
 import com.example.application.views.tufood.TuFoodView;
 import com.example.application.views.perfil.PerfilView;
@@ -133,6 +134,7 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
         nav.addItem(new SideNavItem("Inicio", HomeView.class, LineAwesomeIcon.HOME_SOLID.create()));
         nav.addItem(new SideNavItem("Productos", ProductosView.class, LineAwesomeIcon.LIST_SOLID.create()));
         nav.addItem(new SideNavItem("Mi Perfil", PerfilView.class, LineAwesomeIcon.USER_SOLID.create()));
+        nav.addItem(new SideNavItem("Seguimiento", SeguimientoClienteView.class, LineAwesomeIcon.TRUCK_SOLID.create()));
 
         if (authService.isAdmin()) {
             nav.addItem(new SideNavItem("Añadir Producto", AddProductView.class, LineAwesomeIcon.PLUS_CIRCLE_SOLID.create()));

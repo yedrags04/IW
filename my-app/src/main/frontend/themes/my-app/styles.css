@@ -703,3 +703,66 @@ header vaadin-button[theme~="error"]:hover {
     background-color: var(--lumo-primary-color-50pct);
     color: white;
 }
+
+/* --- VISTA DE SEGUIMIENTO --- */
+.seguimiento-view {
+    background-color: var(--lumo-contrast-5pct);
+}
+
+.stepper-container {
+    position: relative;
+    padding: 20px 0;
+    margin: 20px 0;
+}
+
+/* Línea de fondo del stepper */
+.stepper-container::before {
+    content: '';
+    position: absolute;
+    top: 45%;
+    left: 10%;
+    right: 10%;
+    height: 4px;
+    background: var(--lumo-contrast-20pct);
+    z-index: 0;
+}
+
+.step {
+    z-index: 1;
+    color: var(--lumo-secondary-text-color);
+}
+
+.step vaadin-icon {
+    background: white;
+    border: 3px solid var(--lumo-contrast-20pct);
+    border-radius: 50%;
+    padding: 10px;
+    width: 45px;
+    height: 45px;
+    transition: 0.3s;
+}
+
+.step span {
+    font-size: var(--lumo-font-size-xs);
+    font-weight: 600;
+    margin-top: 8px;
+}
+
+/* Estado Activo */
+.step.active vaadin-icon {
+    border-color: var(--lumo-primary-color);
+    color: var(--lumo-primary-color);
+    transform: scale(1.2);
+}
+
+.step.active span {
+    color: var(--lumo-primary-color);
+}
+
+.info-seguimiento {
+    background: var(--lumo-primary-color-10pct);
+    border-left: 4px solid var(--lumo-primary-color);
+    padding: 15px;
+    border-radius: 4px;
+    margin: 20px 0;
+}
