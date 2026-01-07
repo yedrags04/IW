@@ -14,56 +14,55 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 
-import java.util.List;
 
 @PageTitle("Seguimiento de Pedido | TuFood")
 @Route(value = "seguimiento", layout = MainLayout.class)
 public class SeguimientoView extends Composite<VerticalLayout> implements BeforeEnterObserver {
 
-    private Paragraph infoDireccion = new Paragraph();
-    private Paragraph infoMetodo = new Paragraph();
+    private Span infoDireccion = new Span();
+    private Span infoMetodo = new Span();
     private VerticalLayout stepperContainer = new VerticalLayout();
     private Component repartidorCard;
 
     public SeguimientoView() {
         VerticalLayout root = getContent();
+        root.setAlignItems(FlexComponent.Alignment.CENTER);
         root.getStyle().set("margin-top", "var(--lumo-size-xl)");
-        root.getStyle().set("padding-left", "4rem");
-        root.addClassNames(LumoUtility.Margin.Horizontal.AUTO, LumoUtility.Padding.LARGE);
-        root.setMaxWidth("900px");
+
+        // Contenedor de la "Tarjeta de seguimiento"
+        VerticalLayout card = new VerticalLayout();
+        card.setMaxWidth("800px");
+        card.addClassNames(LumoUtility.Background.BASE, LumoUtility.BorderRadius.LARGE, LumoUtility.BoxShadow.MEDIUM, LumoUtility.Padding.LARGE);
 
         H1 titulo = new H1("Estado de tu Pedido");
-        titulo.addClassNames(LumoUtility.FontSize.XXLARGE, LumoUtility.TextColor.PRIMARY);
+        titulo.addClassNames(LumoUtility.FontSize.XXLARGE, LumoUtility.TextColor.PRIMARY, LumoUtility.Margin.Bottom.NONE);
         
-        root.add(titulo, new Hr());
+        Paragraph sub = new Paragraph("¡Gracias por confiar en TuFood!");
+        sub.addClassNames(LumoUtility.TextColor.SECONDARY, LumoUtility.Margin.Top.NONE);
 
-        // Contenedores vacíos que llenaremos en beforeEnter
         stepperContainer.setPadding(false);
-        root.add(stepperContainer);
         
-        // El resumen de entrega siempre se ve
-        root.add(createResumenEntrega());
+        card.add(titulo, sub, new Hr(), stepperContainer, new Hr(), createResumenEntrega());
+        root.add(card);
     }
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        String direccion = event.getLocation().getQueryParameters().getSingleParameter("direccion").orElse("");
-        String metodo = event.getLocation().getQueryParameters().getSingleParameter("metodo").orElse("");
+        String direccion = event.getLocation().getQueryParameters().getSingleParameter("direccion").orElse("No especificada");
+        String metodo = event.getLocation().getQueryParameters().getSingleParameter("metodo").orElse("No especificado");
 
         boolean esRecogida = direccion.equalsIgnoreCase("Recogida en Tienda");
 
-        // Limpiamos y redibujamos el stepper según el modo
         stepperContainer.removeAll();
         stepperContainer.add(createTrackingStepper(esRecogida));
 
-        // Si es a domicilio, añadimos la tarjeta del repartidor
         if (!esRecogida) {
             if (repartidorCard == null) repartidorCard = createRepartidorCard();
             stepperContainer.add(repartidorCard);
         }
 
-        infoDireccion.setText("📍 " + (esRecogida ? "Punto de recogida: Calle Principal 123" : "Entrega en: " + direccion));
-        infoMetodo.setText("💳 Pago: " + metodo);
+        infoDireccion.setText(esRecogida ? "Punto de recogida: Calle Principal 123 (TuFood Central)" : direccion);
+        infoMetodo.setText(metodo);
     }
 
     private Component createTrackingStepper(boolean esRecogida) {
@@ -71,24 +70,21 @@ public class SeguimientoView extends Composite<VerticalLayout> implements Before
         stepper.setWidthFull();
         stepper.addClassNames(LumoUtility.Margin.Vertical.XLARGE, LumoUtility.JustifyContent.CENTER, LumoUtility.AlignItems.CENTER);
 
-        // Cambiamos el tercer paso según el modo
-        String tercerPasoEtiqueta = esRecogida ? "Listo para recoger" : "En camino";
+        String tercerPasoEtiqueta = esRecogida ? "Listo" : "En camino";
         VaadinIcon tercerPasoIcono = esRecogida ? VaadinIcon.SHOP : VaadinIcon.TRUCK;
 
         stepper.add(
             createStep("Confirmado", VaadinIcon.CHECK_CIRCLE, true),
             createConnector(true),
-            createStep("Cocinando", VaadinIcon.FIRE, true),
+            createStep("Cocina", VaadinIcon.FIRE, true),
             createConnector(true),
-            createStep(tercerPasoEtiqueta, tercerPasoIcono, true), // Paso actual
+            createStep(tercerPasoEtiqueta, tercerPasoIcono, true), // Paso actual activo
             createConnector(false),
-            createStep("Finalizado", VaadinIcon.PACKAGE, false)
+            createStep("Entregado", VaadinIcon.PACKAGE, false)
         );
         return stepper;
     }
 
-    // --- MÉTODOS AUXILIARES (createStep, createConnector, createRepartidorCard, createResumenEntrega igual que antes) ---
-    
     private VerticalLayout createStep(String label, VaadinIcon icon, boolean active) {
         VerticalLayout v = new VerticalLayout();
         v.setPadding(false); v.setSpacing(false);
@@ -96,7 +92,7 @@ public class SeguimientoView extends Composite<VerticalLayout> implements Before
         v.setWidth("min-content");
         Div circle = new Div(icon.create());
         circle.getStyle()
-            .set("background-color", active ? "var(--lumo-success-color)" : "var(--lumo-contrast-10pct)")
+            .set("background-color", active ? "var(--lumo-primary-color)" : "var(--lumo-contrast-10pct)")
             .set("color", active ? "white" : "var(--lumo-disabled-text-color)")
             .set("border-radius", "50%").set("padding", "12px").set("display", "flex");
         Span text = new Span(label);
@@ -107,8 +103,8 @@ public class SeguimientoView extends Composite<VerticalLayout> implements Before
 
     private Div createConnector(boolean active) {
         Div line = new Div();
-        line.setHeight("4px"); line.setWidth("60px");
-        line.getStyle().set("background-color", active ? "var(--lumo-success-color)" : "var(--lumo-contrast-10pct)");
+        line.setHeight("4px"); line.setWidth("50px");
+        line.getStyle().set("background-color", active ? "var(--lumo-primary-color)" : "var(--lumo-contrast-10pct)");
         line.addClassNames(LumoUtility.Margin.Bottom.MEDIUM);
         return line;
     }
@@ -117,16 +113,36 @@ public class SeguimientoView extends Composite<VerticalLayout> implements Before
         HorizontalLayout card = new HorizontalLayout();
         card.setWidthFull();
         card.addClassNames(LumoUtility.Background.CONTRAST_5, LumoUtility.Padding.MEDIUM, LumoUtility.BorderRadius.LARGE, LumoUtility.AlignItems.CENTER);
-        VerticalLayout info = new VerticalLayout(new Span("Juan Pérez (Repartidor)"), new Span("Llegada estimada: 5 min"));
+        
+        Image avatar = new Image("https://api.dicebear.com/7.x/avataaars/svg?seed=Felix", "Repartidor");
+        avatar.setWidth("50px");
+        avatar.getStyle().set("border-radius", "50%");
+
+        VerticalLayout info = new VerticalLayout(
+            new Span("Repartidor: Carlos Gómez"),
+            new Span("Moto: Honda SH125 Blanca")
+        );
         info.setSpacing(false); info.setPadding(false);
-        card.add(VaadinIcon.USER.create(), info);
+        info.addClassNames(LumoUtility.FontSize.SMALL);
+        
+        card.add(avatar, info);
         return card;
     }
 
     private Component createResumenEntrega() {
         VerticalLayout res = new VerticalLayout();
         res.setPadding(false);
-        res.add(new H3("Información de entrega"), infoDireccion, infoMetodo);
+        
+        H3 subtitulo = new H3("Detalles de la Entrega");
+        subtitulo.addClassNames(LumoUtility.Margin.Bottom.SMALL);
+
+        HorizontalLayout dirRow = new HorizontalLayout(VaadinIcon.MAP_MARKER.create(), infoDireccion);
+        dirRow.setAlignItems(FlexComponent.Alignment.CENTER);
+        
+        HorizontalLayout metRow = new HorizontalLayout(VaadinIcon.CREDIT_CARD.create(), infoMetodo);
+        metRow.setAlignItems(FlexComponent.Alignment.CENTER);
+
+        res.add(subtitulo, dirRow, metRow);
         return res;
     }
 }
