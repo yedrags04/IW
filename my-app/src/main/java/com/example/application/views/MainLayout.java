@@ -5,7 +5,6 @@ import com.example.application.security.AuthService;
 import com.example.application.views.main.HomeView;
 import com.example.application.views.mesas.GestionMesasView;
 import com.example.application.views.productos.ProductosView;
-import com.example.application.views.seguimiento.SeguimientoClienteView;
 import com.example.application.views.productos.AddProductView;
 import com.example.application.views.tufood.TuFoodView;
 import com.example.application.views.perfil.PerfilView;
@@ -39,25 +38,20 @@ import com.example.application.repository.AppConfigRepository;
 @AnonymousAllowed
 public class MainLayout extends AppLayout implements AfterNavigationObserver {
 
-
-
     private H1 viewTitle;
     private final AuthService authService;
+    private final String appNameText;
 
     public MainLayout(AuthService authService, AppConfigRepository configRepo) {
         this.authService = authService;
         AppConfig config = configRepo.findById(1L).orElse(new AppConfig());
+        this.appNameText = config.getNombreApp() != null ? config.getNombreApp() : "TuFood App";
 
-        // Esto cambia el color de todos los botones y elementos naranja de la app
+        // Aplicar color primario dinámico
         UI.getCurrent().getElement().executeJs(
             "document.documentElement.style.setProperty('--lumo-primary-color', $0);", 
             config.getColorPrimario()
         );
-
-        // Cambiar el nombre en el Drawer
-        // Donde tenías Span appName = new Span("TuFood App");
-        // Ahora pon:
-        Span appName = new Span(config.getNombreApp());
 
         setPrimarySection(Section.DRAWER);
         addDrawerContent();
@@ -81,8 +75,6 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
 
         Button logoutBtn = new Button("Salir", VaadinIcon.SIGN_OUT.create());
         logoutBtn.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
-        
-        // Llamamos a la función que abre el diálogo de confirmación
         logoutBtn.addClickListener(e -> confirmarSalida());
 
         HorizontalLayout actionLayout = new HorizontalLayout(cartBtn, personBtn, logoutBtn);
@@ -96,12 +88,11 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
         addToNavbar(true, header);
     }
 
-    // --- DIÁLOGO DE CONFIRMACIÓN ---
     private void confirmarSalida() {
         Dialog dialog = new Dialog();
         dialog.setHeaderTitle("Cerrar Sesión");
         
-        VerticalLayout dialogLayout = new VerticalLayout(new Span("¿Estás seguro de que deseas salir de TuFood?"));
+        VerticalLayout dialogLayout = new VerticalLayout(new Span("¿Estás seguro de que deseas salir de " + appNameText + "?"));
         dialog.add(dialogLayout);
 
         Button logoutButton = new Button("Sí", VaadinIcon.SIGN_OUT.create(), e -> {
@@ -119,7 +110,7 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
     }
 
     private void addDrawerContent() {
-        Span appName = new Span("TuFood App");
+        Span appName = new Span(this.appNameText);
         appName.addClassNames(LumoUtility.FontWeight.SEMIBOLD, LumoUtility.FontSize.LARGE);
         Header header = new Header(appName);
         header.addClassNames(LumoUtility.Padding.MEDIUM, LumoUtility.Display.FLEX, LumoUtility.AlignItems.CENTER);
@@ -131,11 +122,14 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
     private SideNav createNavigation() {
         SideNav nav = new SideNav();
 
+        // Vistas públicas / Clientes
         nav.addItem(new SideNavItem("Inicio", HomeView.class, LineAwesomeIcon.HOME_SOLID.create()));
         nav.addItem(new SideNavItem("Productos", ProductosView.class, LineAwesomeIcon.LIST_SOLID.create()));
         nav.addItem(new SideNavItem("Mi Perfil", PerfilView.class, LineAwesomeIcon.USER_SOLID.create()));
-        nav.addItem(new SideNavItem("Seguimiento", SeguimientoClienteView.class, LineAwesomeIcon.TRUCK_SOLID.create()));
+        
+        // NOTA: SeguimientoClienteView NO se añade aquí para que sea invisible en el menú lateral.
 
+        // Vistas de Admin
         if (authService.isAdmin()) {
             nav.addItem(new SideNavItem("Añadir Producto", AddProductView.class, LineAwesomeIcon.PLUS_CIRCLE_SOLID.create()));
             nav.addItem(new SideNavItem("Estadísticas", EstadisticasView.class, LineAwesomeIcon.CHART_BAR_SOLID.create()));
@@ -145,12 +139,11 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
             nav.addItem(new SideNavItem("Personalizar Web", ConfiguracionView.class, LineAwesomeIcon.COG_SOLID.create()));
         }
 
+        // Vistas de Trabajador
         if (authService.isWorker()) {
             nav.addItem(new SideNavItem("Gestión Mesas", GestionMesasView.class, VaadinIcon.TABLE.create()));
             nav.addItem(new SideNavItem("Gestión Pedidos", TuFoodView.class, LineAwesomeIcon.UTENSILS_SOLID.create()));
-
         }
-
 
         return nav;
     }

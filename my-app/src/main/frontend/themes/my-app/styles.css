@@ -50,6 +50,29 @@ h1, h2, h3, h4, h5 {
     font-weight: 700;
     color: var(--lumo-header-text-color);
 }
+/* --- FIX DE SOLAPAMIENTO Y JERARQUÍA --- */
+
+/* 1. El Drawer (menú lateral) debe estar siempre por encima */
+vaadin-app-layout::part(drawer) {
+    z-index: 200 !important;
+}
+
+/* 2. El Backdrop (capa oscura cuando el menú se abre) */
+vaadin-app-layout::part(backdrop) {
+    z-index: 150 !important;
+}
+
+/* 3. Evitar que el título choque con la barra superior */
+.tufood-view-container {
+    padding-top: 20px;
+    margin-top: 20px; /* Espacio de seguridad bajo el Navbar */
+}
+
+/* 4. Asegurar que las estadísticas no floten sobre el menú */
+.kpi-layout-container {
+    position: relative;
+    z-index: 1;
+}
 
 /* --- DISEÑO DEL CONTENEDOR PRINCIPAL --- */
 .login-page-layout {

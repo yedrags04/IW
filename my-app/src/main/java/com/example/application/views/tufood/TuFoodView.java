@@ -16,17 +16,14 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 
-
-import org.vaadin.lineawesome.LineAwesomeIconUrl;
+import java.time.format.DateTimeFormatter;
 
 @PageTitle("Panel de Control | TuFood")
 @Route(value = "tufood", layout = MainLayout.class)
-@Menu(order = 0, icon = LineAwesomeIconUrl.UTENSILS_SOLID, title = "Gestión Pedidos")
 public class TuFoodView extends Composite<VerticalLayout> {
 
     private final OrderService orderService;
@@ -37,92 +34,86 @@ public class TuFoodView extends Composite<VerticalLayout> {
     private final Span txtListos = new Span("0");
     private final Span txtEntregados = new Span("0");
 
+    // Formateador de hora para la tabla
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+
     public TuFoodView(AuthService authService, OrderService orderService) {
         this.orderService = orderService;
         VerticalLayout root = getContent();
         
-    if (!authService.isAdmin() && !authService.isWorker()) {
-                root.setAlignItems(FlexComponent.Alignment.CENTER);
-                root.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
-                root.add(new H2("Acceso denegado"));
-                return;
-            }
-
         root.setSizeFull();
-        root.setPadding(false);
-        root.setSpacing(false);
-        root.getStyle().set("min-width", "0");
-        root.getStyle().set("overflow", "hidden"); 
-        root.getStyle().set("background-color", "var(--lumo-contrast-5pct)");
+        root.setPadding(true);
+        root.getStyle().set("overflow", "auto");
 
-        VerticalLayout scrollContainer = new VerticalLayout();
-        scrollContainer.setSizeFull();
-        scrollContainer.getStyle().set("overflow-y", "auto");
-        scrollContainer.getStyle().set("min-width", "0");
-        
-        VerticalLayout content = new VerticalLayout();
-        content.setMaxWidth("1200px");
-        content.setWidthFull();
-        content.addClassNames(LumoUtility.Margin.Horizontal.AUTO, LumoUtility.Padding.MEDIUM);
+        if (!authService.isAdmin() && !authService.isWorker()) {
+            root.setAlignItems(FlexComponent.Alignment.CENTER);
+            root.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+            root.add(new H2("Acceso denegado"));
+            return;
+        }
+
+        VerticalLayout mainContainer = new VerticalLayout();
+        mainContainer.setMaxWidth("1200px");
+        mainContainer.addClassNames(LumoUtility.Margin.Horizontal.AUTO);
+        mainContainer.setPadding(false);
 
         H1 title = new H1("Gestión de Operaciones");
         title.addClassNames(LumoUtility.FontSize.XXLARGE, LumoUtility.Margin.NONE);
+        
         Button btnRefresh = new Button(VaadinIcon.REFRESH.create(), e -> actualizarTodo());
-        btnRefresh.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-
-        HorizontalLayout header = new HorizontalLayout(new VerticalLayout(title, new Span("Panel de control dinámico")), btnRefresh);
+        btnRefresh.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);
+        
+        HorizontalLayout header = new HorizontalLayout(
+            new VerticalLayout(title, new Span("Control de flujo cocina y sala")), 
+            btnRefresh
+        );
         header.setWidthFull();
+        header.setAlignItems(FlexComponent.Alignment.CENTER);
         header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
 
-        HorizontalLayout stats = new HorizontalLayout(
-            createStatCard("Nuevos", txtNuevos, VaadinIcon.BELL, "var(--lumo-error-color)"),
-            createStatCard("En Preparación", txtPreparacion, VaadinIcon.FIRE, "var(--lumo-warning-color)"),
-            createStatCard("Listos", txtListos, VaadinIcon.PACKAGE, "var(--lumo-success-color)"),
-            createStatCard("Entregados", txtEntregados, VaadinIcon.CHECK_CIRCLE, "var(--lumo-contrast-50pct)")
+        // KPIs de estadísticas
+        HorizontalLayout kpiLayout = new HorizontalLayout(
+            createStatCard("Nuevos", txtNuevos, VaadinIcon.BELL, "success"),
+            createStatCard("Cocinando", txtPreparacion, VaadinIcon.FIRE, "warning"),
+            createStatCard("Listos", txtListos, VaadinIcon.PACKAGE, "info"),
+            createStatCard("Cerrados", txtEntregados, VaadinIcon.CHECK_CIRCLE, null)
         );
-        stats.setWidthFull();
+        kpiLayout.setWidthFull();
+        kpiLayout.addClassNames(LumoUtility.Margin.Vertical.MEDIUM);
 
         configureGrid();
-
-        content.add(header, stats, new H3("Cola de Trabajo"), grid);
-        scrollContainer.add(content);
-        root.add(scrollContainer);
+        
+        mainContainer.add(header, kpiLayout, new H3("Cola de Comandas"), grid);
+        root.add(mainContainer);
 
         actualizarTodo(); 
     }
 
     private void configureGrid() {
         grid.removeAllColumns();
-        grid.setWidthFull();
         
-        grid.addColumn(pedido -> {
-        return pedido.getFecha() != null ? 
-               pedido.getFecha().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss")) : "";
-    }).setHeader("Hora").setAutoWidth(true);
+        // CORRECCIÓN AQUÍ: Formateamos la fecha directamente en la columna
+        grid.addColumn(p -> p.getFecha() != null ? p.getFecha().format(formatter) : "--:--")
+            .setHeader("Hora")
+            .setAutoWidth(true);
 
-        grid.addColumn(Pedido::getTicketId).setHeader("ID Ticket").setAutoWidth(true);
-        grid.addColumn(Pedido::getCliente).setHeader("Cliente").setAutoWidth(true);
+        grid.addColumn(Pedido::getCliente).setHeader("Mesa / Cliente").setAutoWidth(true);
         grid.addColumn(Pedido::getTipo).setHeader("Tipo").setAutoWidth(true);
         grid.addComponentColumn(this::createStatusBadge).setHeader("Estado").setAutoWidth(true);
     
         grid.addComponentColumn(pedido -> {
             String estado = pedido.getEstado().toUpperCase();
             String etiqueta;
-            VaadinIcon icono = VaadinIcon.ARROW_RIGHT;
             boolean visible = true;
 
             switch (estado) {
-                case "NUEVO" -> etiqueta = "Preparar";
-                case "EN PREPARACION" -> etiqueta = "Listo";
-                case "LISTO" -> etiqueta = "Entregar";
-                default -> {
-                    etiqueta = "Finalizado";
-                    icono = VaadinIcon.CHECK;
-                    visible = false;
-                }
+                case "NUEVO" -> etiqueta = "Empezar Cocina";
+                case "EN PREPARACION" -> etiqueta = "Plato Listo";
+                case "LISTO" -> etiqueta = "Finalizar";
+                default -> { visible = false; etiqueta = ""; }
             }
 
-            Button btn = new Button(etiqueta, icono.create());
+            Button btn = new Button(etiqueta);
             btn.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
             btn.setVisible(visible);
             btn.addClickListener(e -> {
@@ -131,9 +122,8 @@ public class TuFoodView extends Composite<VerticalLayout> {
             });
             return btn;
         }).setHeader("Acción").setAutoWidth(true);
-        grid.addThemeVariants(GridVariant.LUMO_NO_BORDER, GridVariant.LUMO_ROW_STRIPES);
 
-        grid.addThemeVariants(GridVariant.LUMO_NO_BORDER, GridVariant.LUMO_ROW_STRIPES);
+        grid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES, GridVariant.LUMO_NO_BORDER);
         grid.addClassNames(LumoUtility.Background.BASE, LumoUtility.BorderRadius.LARGE, LumoUtility.BoxShadow.SMALL);
     }
 
@@ -145,20 +135,23 @@ public class TuFoodView extends Composite<VerticalLayout> {
         txtEntregados.setText(String.valueOf(orderService.contarPorEstado("ENTREGADO")));
     }
 
-    private Component createStatCard(String title, Span valueSpan, VaadinIcon icon, String color) {
-        HorizontalLayout card = new HorizontalLayout();
-        card.addClassNames(LumoUtility.Background.BASE, LumoUtility.Padding.MEDIUM, LumoUtility.BorderRadius.LARGE, LumoUtility.BoxShadow.SMALL);
-        card.setWidthFull();
+    private Component createStatCard(String title, Span valueSpan, VaadinIcon icon, String theme) {
+        VerticalLayout card = new VerticalLayout();
+        card.addClassName("stat-card");
+        
+        if (theme != null && !theme.trim().isEmpty()) {
+            card.addClassName(theme);
+        }
+        
         card.setAlignItems(FlexComponent.Alignment.CENTER);
-
+        card.setSpacing(false);
+        card.setPadding(true);
+        
         Icon i = icon.create();
-        i.getStyle().set("color", color);
+        i.setSize("30px");
         valueSpan.addClassNames(LumoUtility.FontSize.XXLARGE, LumoUtility.FontWeight.BOLD);
         
-        VerticalLayout info = new VerticalLayout(new Span(title), valueSpan);
-        info.setPadding(false); info.setSpacing(false);
-
-        card.add(i, info);
+        card.add(i, new Span(title), valueSpan);
         return card;
     }
 
@@ -166,13 +159,9 @@ public class TuFoodView extends Composite<VerticalLayout> {
         String estado = p.getEstado().toUpperCase();
         Span badge = new Span(estado);
         badge.getElement().getThemeList().add("badge pill");
-        
-        switch (estado) {
-            case "NUEVO" -> badge.getElement().getThemeList().add("error");
-            case "EN PREPARACION" -> badge.getElement().getThemeList().add("warning");
-            case "LISTO" -> badge.getElement().getThemeList().add("success");
-            default -> badge.getStyle().set("background-color", "var(--lumo-contrast-20pct)");
-        }
+        if(estado.equals("NUEVO")) badge.getElement().getThemeList().add("error");
+        else if(estado.equals("EN PREPARACION")) badge.getElement().getThemeList().add("warning");
+        else if(estado.equals("LISTO")) badge.getElement().getThemeList().add("success");
         return badge;
     }
 }

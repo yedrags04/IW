@@ -3,7 +3,7 @@ package com.example.application.security;
 import com.example.application.repository.UsuarioRepository;
 import com.example.application.model.Usuario;
 import com.vaadin.flow.server.VaadinSession;
-import org.springframework.security.crypto.password.PasswordEncoder; // IMPORTANTE
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
@@ -16,30 +16,32 @@ public class AuthService {
 
     private final UsuarioRepository usuarioRepository;
     private final Validator validator;
-    private final PasswordEncoder passwordEncoder; // Añadido
+    private final PasswordEncoder passwordEncoder;
+
+    public static final String ROL_SESSION_ATTRIBUTE = "userRole";
+    public static final String USERNAME_SESSION_ATTRIBUTE = "userName";
+    public static final String USUARIO_COMPLETO_ATTRIBUTE = "usuario";
 
     public AuthService(UsuarioRepository usuarioRepository, Validator validator, PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
         this.validator = validator; 
-        this.passwordEncoder = passwordEncoder; // Inyectado
+        this.passwordEncoder = passwordEncoder;
     }
 
-    public static final String ROL_SESSION_ATTRIBUTE = "userRole";
-    public static final String USERNAME_SESSION_ATTRIBUTE = "userName";
+    // Método corregido para recuperar el usuario de la sesión
+    public Usuario getAuthenticatedUser() {
+        return (Usuario) VaadinSession.getCurrent().getAttribute(USUARIO_COMPLETO_ATTRIBUTE);
+    }
 
     public boolean authenticate(String username, String password) {
         Optional<Usuario> userOpt = usuarioRepository.findByNombre(username);
         
-        // Comparamos usando matches: password escrita vs hash de la base de datos
         if (userOpt.isPresent() && passwordEncoder.matches(password, userOpt.get().getContrasena())) {
             Usuario user = userOpt.get();
             
-            // Guardamos datos individuales
             VaadinSession.getCurrent().setAttribute(ROL_SESSION_ATTRIBUTE, user.getRol());
             VaadinSession.getCurrent().setAttribute(USERNAME_SESSION_ATTRIBUTE, user.getNombre());
-            
-            // Guardamos el objeto completo
-            VaadinSession.getCurrent().setAttribute("usuario", user);
+            VaadinSession.getCurrent().setAttribute(USUARIO_COMPLETO_ATTRIBUTE, user);
             
             return true;
         }
@@ -55,7 +57,6 @@ public class AuthService {
             return "El email ya está registrado.";
         }
         
-        // ENCRIPTAMOS la contraseña antes de crear el objeto
         String encryptedPassword = passwordEncoder.encode(password);
         Usuario newUser = new Usuario(name, encryptedPassword, "USER", email); 
         
@@ -84,7 +85,6 @@ public class AuthService {
         String role = (String) VaadinSession.getCurrent().getAttribute(ROL_SESSION_ATTRIBUTE);
         return "ADMIN".equals(role);
     }
-    
     
     public boolean isUserLoggedIn() {
         return VaadinSession.getCurrent().getAttribute(USERNAME_SESSION_ATTRIBUTE) != null;
