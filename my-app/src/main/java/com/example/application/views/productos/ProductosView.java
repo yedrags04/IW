@@ -26,15 +26,12 @@ import java.util.List;
 import org.springframework.data.domain.Sort;
 import org.vaadin.lineawesome.LineAwesomeIconUrl;
 
-/**
- * Galería principal de productos con filtros y ordenación.
- */
 @PageTitle("productos")
 @Route(value = "image-gallery", layout = MainLayout.class)
 @Menu(order = 3, icon = LineAwesomeIconUrl.TH_LIST_SOLID)
 public class ProductosView extends Main implements HasComponents, HasStyle, HasUrlParameter<String> {
 
-    private OrderedList imageContainer; // Contenedor dinámico de las tarjetas
+    private OrderedList imageContainer;
     private final ProductoRepository productoRepository;
     private final ShoppingCartService cartService;
     private final AuthService authService;
@@ -47,14 +44,14 @@ public class ProductosView extends Main implements HasComponents, HasStyle, HasU
         this.cartService = cartService;
         this.authService = authService;
 
+        // Ajuste para evitar que el banner oculte el título
         getStyle().set("margin-top", "80px"); 
+        getStyle().set("display", "block");
+
         constructUI();
         addAdminAddProductButton(); 
     }
 
-    /**
-     * Captura el parámetro opcional de categoría de la URL.
-     */
     @Override
     public void setParameter(BeforeEvent event, @OptionalParameter String parameter) {
         List<String> categoriaParams = event.getLocation().getQueryParameters().getParameters().get("categoria");
@@ -70,37 +67,58 @@ public class ProductosView extends Main implements HasComponents, HasStyle, HasU
     }
 
     private void constructUI() {
-        addClassNames("productos-view", MaxWidth.SCREEN_MEDIUM, Margin.Horizontal.AUTO, Padding.Vertical.XLARGE);
+        addClassNames("productos-view", MaxWidth.SCREEN_MEDIUM, Margin.Horizontal.AUTO, 
+                     Padding.Bottom.LARGE, Padding.Horizontal.LARGE, Padding.Top.XLARGE);
 
+        // --- CABECERA CENTRADA ---
+        VerticalLayout headerContainer = new VerticalLayout();
+        headerContainer.setPadding(false);
+        headerContainer.setAlignItems(FlexComponent.Alignment.CENTER); 
+        headerContainer.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+        
         headerTitle = new H2("Nuestros Productos");
-        VerticalLayout headerContainer = new VerticalLayout(headerTitle, new Paragraph("Selecciona tus platos favoritos."));
-        headerContainer.setAlignItems(FlexComponent.Alignment.CENTER);
+        headerTitle.addClassNames(Margin.Bottom.NONE, Margin.Top.NONE, FontSize.XXXLARGE);
+        
+        Paragraph description = new Paragraph("Selecciona tus platos favoritos.");
+        description.addClassNames(Margin.Bottom.MEDIUM, Margin.Top.NONE, TextColor.SECONDARY);
+        headerContainer.add(headerTitle, description);
 
-        // Barra de herramientas: Filtro "Ver todo" y Select de ordenación
+        // --- FILTROS ALINEADOS A LA DERECHA ---
         HorizontalLayout filterLayout = new HorizontalLayout();
         filterLayout.setWidthFull();
+        filterLayout.setAlignItems(FlexComponent.Alignment.BASELINE);
+        // CAMBIO AQUÍ: Alineamos el contenido al final (derecha)
         filterLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+        filterLayout.addClassNames(Margin.Bottom.LARGE);
 
         Select<String> sortBy = new Select<>();
         sortBy.setLabel("Ordenar por");
         sortBy.setItems("Más nuevos", "Precio: Bajo a Alto", "Precio: Alto a Bajo");
+        sortBy.setValue("Más nuevos");
         sortBy.addValueChangeListener(e -> aplicarOrden(e.getValue()));
 
         Button clearFilter = new Button("Ver todo", e -> UI.getCurrent().navigate(ProductosView.class));
+        clearFilter.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        
         filterLayout.add(clearFilter, sortBy);
 
-        // Cuadrícula Grid (CSS)
+        // --- GRID DE PRODUCTOS ---
         imageContainer = new OrderedList();
         imageContainer.addClassNames(Gap.LARGE, Display.GRID, ListStyleType.NONE, Margin.NONE, Padding.NONE);
-        imageContainer.getStyle().set("grid-template-columns", "repeat(auto-fit, minmax(280px, 1fr))");
+        
+        imageContainer.getStyle()
+            .set("grid-template-columns", "repeat(auto-fit, minmax(280px, 320px))")
+            .set("justify-content", "center")
+            .set("max-width", "1100px")
+            .set("margin", "0 auto");
 
         add(headerContainer, filterLayout, imageContainer);
     }
 
     private void aplicarOrden(String criterio) {
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
-        if (criterio.contains("Bajo a Alto")) sort = Sort.by(Sort.Direction.ASC, "precio");
-        else if (criterio.contains("Alto a Bajo")) sort = Sort.by(Sort.Direction.DESC, "precio");
+        if (criterio.equals("Precio: Bajo a Alto")) sort = Sort.by(Sort.Direction.ASC, "precio");
+        if (criterio.equals("Precio: Alto a Bajo")) sort = Sort.by(Sort.Direction.DESC, "precio");
         cargarProductos(sort);
     }
 
@@ -115,14 +133,21 @@ public class ProductosView extends Main implements HasComponents, HasStyle, HasU
         }
     }
 
-    /**
-     * Botón flotante (+) visible solo para administradores.
-     */
     private void addAdminAddProductButton() {
         if (authService.isAdmin()) {
-            Button addProductBtn = new Button(new Icon(VaadinIcon.PLUS), e -> UI.getCurrent().navigate("add-product"));
+            Button addProductBtn = new Button(new Icon(VaadinIcon.PLUS));
             addProductBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
-            addProductBtn.getStyle().set("position", "fixed").set("bottom", "30px").set("right", "30px").set("border-radius", "50%");
+            addProductBtn.getStyle()
+                .set("position", "fixed")
+                .set("bottom", "30px")
+                .set("right", "30px")
+                .set("z-index", "1000")
+                .set("border-radius", "50%")
+                .set("width", "60px")
+                .set("height", "60px")
+                .set("box-shadow", "0 4px 12px rgba(0, 0, 0, 0.3)");
+            
+            addProductBtn.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("add-product")));
             add(addProductBtn);
         }
     }

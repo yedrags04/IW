@@ -3,39 +3,45 @@ package com.example.application.services;
 import com.example.application.model.Producto;
 import com.vaadin.flow.server.VaadinSession;
 import org.springframework.stereotype.Service;
+
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/* * SERVICIO DE CARRITO DE COMPRA
- * Gestiona los productos que el cliente selecciona en la web.
- * A diferencia de otros servicios, el estado se guarda en la VaadinSession 
- * para que cada cliente tenga su propio carrito independiente.
+/**
+ * Servicio de carrito de compras que mantiene el estado en la sesión de Vaadin.
  */
 @Service
 public class ShoppingCartService implements Serializable {
 
     private static final String CART_SESSION_KEY = "shoppingCart";
 
-    // Recupera el carrito de la sesión actual o crea uno nuevo si no existe
+    /**
+     * Obtiene el mapa del carrito de la sesión. Si no existe, crea uno nuevo.
+     */
     @SuppressWarnings("unchecked")
     private Map<Producto, Integer> getCart() {
         Map<Producto, Integer> cart = (Map<Producto, Integer>) VaadinSession.getCurrent().getAttribute(CART_SESSION_KEY);
         if (cart == null) {
-            cart = new LinkedHashMap<>(); // Usamos LinkedHashMap para mantener el orden de inserción
+            cart = new LinkedHashMap<>(); 
             VaadinSession.getCurrent().setAttribute(CART_SESSION_KEY, cart);
         }
         return cart;
     }
 
-    // Añade un producto o incrementa la cantidad si ya existía
+    /**
+     * Añade un producto al carrito o incrementa su cantidad.
+     */
     public void addProduct(Producto producto) {
         Map<Producto, Integer> cart = getCart();
         cart.merge(producto, 1, Integer::sum);
     }
 
-    // Reduce la cantidad de un plato o lo quita del carrito si queda solo uno
+    /**
+     * --- NUEVO MÉTODO ---
+     * Reduce la cantidad de un producto o lo elimina si solo queda uno.
+     */
     public void removeProduct(Producto producto) {
         Map<Producto, Integer> cart = getCart();
         if (cart.containsKey(producto)) {
@@ -48,26 +54,34 @@ public class ShoppingCartService implements Serializable {
         }
     }
 
-    // Devuelve el contenido del carrito (Solo lectura para evitar modificaciones externas)
+    /**
+     * Devuelve una vista inmutable del contenido del carrito.
+     */
     public Map<Producto, Integer> getCartContents() {
         return Collections.unmodifiableMap(getCart());
     }
 
-    // Calcula el importe total de la compra multiplicando precio por cantidad
+    /**
+     * Calcula el precio total de todos los artículos en el carrito.
+     */
     public double getTotalPrice() {
         return getCartContents().entrySet().stream()
                 .mapToDouble(entry -> entry.getKey().getPrecio() * entry.getValue())
                 .sum();
     }
 
-    // Retorna la cantidad total de artículos en el carrito
+    /**
+     * Obtiene el número total de artículos (unidades) en el carrito.
+     */
     public int getItemCount() {
         return getCartContents().values().stream()
                 .mapToInt(Integer::intValue)
                 .sum();
     }
     
-    // Resetea el carrito de la sesión (se usa tras finalizar un pago con éxito)
+    /**
+     * Vacía completamente el carrito.
+     */
     public void clearCart() {
         VaadinSession.getCurrent().setAttribute(CART_SESSION_KEY, new LinkedHashMap<Producto, Integer>());
     }

@@ -27,9 +27,6 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-/**
- * Vista de perfil de usuario. Permite la edición de datos personales.
- */
 @PageTitle("Mi Perfil | Tu Food")
 @Route(value = "perfil", layout = MainLayout.class)
 public class PerfilView extends VerticalLayout {
@@ -42,21 +39,19 @@ public class PerfilView extends VerticalLayout {
     private EmailField email = new EmailField("Correo Electrónico");
     private PasswordField password = new PasswordField("Nueva Contraseña (dejar en blanco para no cambiar)");
     
-    // El Binder sincroniza los campos del formulario con el objeto Usuario
     private Binder<Usuario> binder = new BeanValidationBinder<>(Usuario.class);
 
     public PerfilView(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         
-        // 1. Obtener usuario actual desde la sesión de Vaadin
+        // 1. Obtener usuario de la sesión
         String nombreUsuario = (String) VaadinSession.getCurrent().getAttribute("userName");
         if (nombreUsuario == null) {
             UI.getCurrent().navigate(HomeView.class);
             return;
         }
         
-        // Cargar datos de la BD
         usuarioRepository.findByNombre(nombreUsuario).ifPresentOrElse(u -> {
             this.usuarioActual = u;
             construirVista();
@@ -64,10 +59,8 @@ public class PerfilView extends VerticalLayout {
         }, () -> mostrarError("Usuario no encontrado"));
     }
     
-    /**
-     * Define las reglas de validación y vinculación entre UI y Modelo.
-     */
     private void configurarBinder() {
+        // Vinculamos los campos
         binder.forField(nombre)
             .asRequired("El nombre es obligatorio")
             .bind(Usuario::getNombre, Usuario::setNombre);
@@ -77,7 +70,7 @@ public class PerfilView extends VerticalLayout {
             .withValidator(new com.vaadin.flow.data.validator.EmailValidator("Email no válido"))
             .bind(Usuario::getEmail, Usuario::setEmail);
 
-        // Lógica especial para la contraseña: solo se actualiza si el campo no está vacío
+        // La contraseña es especial: solo se encripta y guarda si el usuario escribe algo
         binder.forField(password)
             .withValidator(p -> p.isEmpty() || p.length() >= 6, "La contraseña debe tener al menos 6 caracteres")
             .bind(u -> "", (u, p) -> {
@@ -86,7 +79,7 @@ public class PerfilView extends VerticalLayout {
                 }
             });
 
-        // Vuelca los datos del objeto usuarioActual en los inputs
+        // Cargamos los datos actuales del objeto al formulario
         binder.readBean(usuarioActual);
     }
     
@@ -96,13 +89,12 @@ public class PerfilView extends VerticalLayout {
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.CENTER);
 
-        // Contenedor tipo tarjeta
         VerticalLayout card = new VerticalLayout();
         card.addClassNames("perfil-card", "perfil-card-content"); 
         card.setMaxWidth("600px");
         card.setPadding(true);
 
-        // Cabecera con Avatar e información de Rol
+        // --- ENCABEZADO CON AVATAR ---
         HorizontalLayout header = new HorizontalLayout();
         header.setAlignItems(Alignment.CENTER);
         Avatar avatar = new Avatar(usuarioActual.getNombre());
@@ -114,21 +106,24 @@ public class PerfilView extends VerticalLayout {
         titleLayout.setSpacing(false);
         header.add(avatar, titleLayout);
 
-        // Formulario estético con iconos
+        // --- FORMULARIO ---
         FormLayout formLayout = new FormLayout();
         nombre.setPrefixComponent(new Icon(VaadinIcon.USER));
         email.setPrefixComponent(new Icon(VaadinIcon.ENVELOPE));
         password.setPrefixComponent(new Icon(VaadinIcon.KEY));
 
         formLayout.add(nombre, email, password);
-        formLayout.setColspan(password, 2); // Ocupa dos columnas
+        formLayout.setColspan(nombre, 1);
+        formLayout.setColspan(email, 1);
+        formLayout.setColspan(password, 2);
 
-        // Botones de acción
+        // --- ACCIONES ---
         Button guardar = new Button("Actualizar Datos", new Icon(VaadinIcon.CHECK));
         guardar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         guardar.addClickListener(e -> guardarCambios());
 
-        Button cancelar = new Button("Cancelar", e -> UI.getCurrent().navigate(HomeView.class));
+        Button cancelar = new Button("Cancelar");
+        cancelar.addClickListener(e -> UI.getCurrent().navigate(HomeView.class));
 
         HorizontalLayout actions = new HorizontalLayout(cancelar, guardar);
         actions.setWidthFull();
@@ -138,21 +133,20 @@ public class PerfilView extends VerticalLayout {
         add(card);
     }
 
-    /**
-     * Persiste los cambios en la base de datos tras validar el binder.
-     */
     private void guardarCambios() {
+        // El rol no se toca porque no está bindeado a ningún campo del formulario
         if (binder.writeBeanIfValid(usuarioActual)) {
             try {
                 usuarioRepository.save(usuarioActual);
                 
-                // Actualizamos el nombre en sesión por si se ha modificado
+                // Actualizamos la sesión por si cambió el nombre
                 VaadinSession.getCurrent().setAttribute("userName", usuarioActual.getNombre());
                 
                 Notification.show("Perfil actualizado con éxito")
                         .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
                 
-                password.clear(); // Limpiar campo visualmente
+                // Limpiar campo password después de guardar
+                password.clear();
             } catch (Exception ex) {
                 mostrarError("Error: El nombre o email ya están en uso.");
             }

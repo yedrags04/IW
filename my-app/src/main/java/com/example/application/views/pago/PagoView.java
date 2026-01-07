@@ -28,9 +28,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-/**
- * Vista de Checkout. Maneja la selección de entrega, método de pago y generación de factura PDF.
- */
 @PageTitle("Pago | TuFood")
 @Route(value = "pago", layout = MainLayout.class)
 public class PagoView extends VerticalLayout implements HasUrlParameter<String> {
@@ -60,12 +57,11 @@ public class PagoView extends VerticalLayout implements HasUrlParameter<String> 
         setJustifyContentMode(JustifyContentMode.CENTER);
         setAlignItems(Alignment.CENTER);
 
-        // Tarjeta central que contiene el formulario
         VerticalLayout card = new VerticalLayout();
         card.addClassNames("perfil-card", "perfil-card-content");
         card.setMaxWidth("600px");
 
-        // --- SECCIÓN 1: ENTREGA ---
+        // --- 1. MODO DE ENTREGA ---
         deliverySection = new VerticalLayout();
         deliverySection.setPadding(false);
         deliverySection.add(new H3("1. Modo de Entrega"));
@@ -81,7 +77,7 @@ public class PagoView extends VerticalLayout implements HasUrlParameter<String> 
 
         deliverySection.add(new HorizontalLayout(btnHome, btnStore), addressField);
 
-        // --- SECCIÓN 2: PAGO ---
+        // --- 2. MÉTODO DE PAGO ---
         paymentSection = new VerticalLayout();
         paymentSection.setPadding(false);
         paymentSection.add(new H3("2. Método de Pago"));
@@ -91,7 +87,6 @@ public class PagoView extends VerticalLayout implements HasUrlParameter<String> 
         btnCard.setWidthFull(); btnCash.setWidthFull();
         btnCard.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         
-        // Campos de tarjeta (se ocultan si es efectivo)
         cardNum = new TextField("Número de Tarjeta");
         cardHolder = new TextField("Titular");
         cardExp = new TextField("Expiración (MM/YY)");
@@ -101,7 +96,7 @@ public class PagoView extends VerticalLayout implements HasUrlParameter<String> 
         creditCardForm = new VerticalLayout(form);
         paymentSection.add(new HorizontalLayout(btnCard, btnCash), creditCardForm);
 
-        // --- BOTÓN FINAL ---
+        // --- 3. BOTÓN FINAL ---
         submit = new Button("Confirmar Pago", e -> validarYProcesar());
         submit.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
         submit.setWidthFull();
@@ -125,9 +120,6 @@ public class PagoView extends VerticalLayout implements HasUrlParameter<String> 
         creditCardForm.setVisible(!cash);
     }
 
-    /**
-     * Valida que los campos obligatorios estén rellenos antes de procesar.
-     */
     private void validarYProcesar() {
         if (!esMesa && isDelivery && addressField.getValue().trim().isEmpty()) {
             notificarError("Por favor, introduce una dirección de entrega");
@@ -149,9 +141,6 @@ public class PagoView extends VerticalLayout implements HasUrlParameter<String> 
         n.setPosition(Notification.Position.MIDDLE);
     }
 
-    /**
-     * Lee los parámetros de la URL para configurar la vista (Si viene de Mesa o Carrito).
-     */
     @Override
     public void setParameter(BeforeEvent event, @OptionalParameter String parameter) {
         var params = event.getLocation().getQueryParameters().getParameters();
@@ -159,7 +148,7 @@ public class PagoView extends VerticalLayout implements HasUrlParameter<String> 
             esMesa = true;
             total = Double.parseDouble(params.get("total").get(0));
             mesaNum = Integer.parseInt(params.get("mesa").get(0));
-            deliverySection.setVisible(false); // No hay delivery si estás en el restaurante
+            deliverySection.setVisible(false);
             submit.setText("Cobrar Mesa " + mesaNum + " (" + String.format("%.2f", total) + "€)");
         } else {
             esMesa = false;
@@ -169,9 +158,6 @@ public class PagoView extends VerticalLayout implements HasUrlParameter<String> 
         }
     }
 
-    /**
-     * Simula el proceso de pago con una barra de progreso.
-     */
     private void process() {
         Dialog loading = new Dialog();
         ProgressBar pb = new ProgressBar(); pb.setIndeterminate(true);
@@ -195,15 +181,13 @@ public class PagoView extends VerticalLayout implements HasUrlParameter<String> 
         }).start();
     }
 
-    /**
-     * Muestra un ticket visual y permite descargar la factura PDF.
-     */
     private void showInvoice(String metodo, String modo, Map<Producto, Integer> items) {
         Dialog d = new Dialog();
         d.setWidth("450px");
         d.setCloseOnEsc(false);
         d.setCloseOnOutsideClick(false);
 
+        // --- DISEÑO TICKET VISUAL ---
         VerticalLayout ticket = new VerticalLayout();
         ticket.setAlignItems(Alignment.CENTER);
         ticket.setSpacing(false);
@@ -217,6 +201,7 @@ public class PagoView extends VerticalLayout implements HasUrlParameter<String> 
         ticket.add(new Span(esMesa ? "SERVICIO DE MESA: " + mesaNum : "PEDIDO ONLINE"));
         ticket.add(new Hr());
 
+        // Listado de productos
         VerticalLayout listado = new VerticalLayout();
         listado.setPadding(false);
         items.forEach((p, q) -> {
@@ -226,7 +211,7 @@ public class PagoView extends VerticalLayout implements HasUrlParameter<String> 
         });
         ticket.add(listado, new Hr());
 
-        // Cálculo de impuestos
+        // Totales e IVA
         double baseImponible = total / 1.10;
         double iva = total - baseImponible;
 
@@ -241,24 +226,34 @@ public class PagoView extends VerticalLayout implements HasUrlParameter<String> 
         if (!esMesa) ticket.add(new Span("ENTREGA: " + modo));
         ticket.add(new Hr(), new Paragraph("¡Gracias por confiar en nosotros!"));
 
-        // Lógica de generación de PDF con OpenPDF
+        // --- GENERACIÓN PDF PROFESIONAL ---
         StreamResource res = new StreamResource("Factura_TuFood.pdf", () -> {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             Document doc = new Document();
             try {
                 PdfWriter.getInstance(doc, out); 
                 doc.open();
+                
                 com.lowagie.text.Font bold = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14);
-                doc.add(new com.lowagie.text.Paragraph("TUFOOD S.A. - FACTURA SIMPLIFICADA", bold));
+                com.lowagie.text.Paragraph p1 = new com.lowagie.text.Paragraph("TUFOOD S.A. - FACTURA SIMPLIFICADA", bold);
+                p1.setAlignment(Element.ALIGN_CENTER);
+                doc.add(p1);
                 doc.add(new com.lowagie.text.Paragraph("CIF: B-12345678 | Calle Principal 123\n\n"));
+                
                 doc.add(new com.lowagie.text.Paragraph("Fecha: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))));
+                doc.add(new com.lowagie.text.Paragraph("Referencia: " + (esMesa ? "Mesa " + mesaNum : "Web Order")));
                 doc.add(new com.lowagie.text.Paragraph("------------------------------------------------------------------"));
+
                 items.forEach((p,q) -> { 
-                    try { doc.add(new com.lowagie.text.Paragraph(q + "x " + p.getNombre() + " .... " + String.format("%.2f", p.getPrecio()*q) + "€")); } 
+                    try { doc.add(new com.lowagie.text.Paragraph(q + "x " + p.getNombre() + " ................. " + String.format("%.2f", p.getPrecio()*q) + "€")); } 
                     catch(Exception ex) {} 
                 });
+
                 doc.add(new com.lowagie.text.Paragraph("------------------------------------------------------------------"));
                 doc.add(new com.lowagie.text.Paragraph("TOTAL (IVA Incluido): " + String.format("%.2f", total) + "€"));
+                doc.add(new com.lowagie.text.Paragraph("Metodo de pago: " + metodo));
+                doc.add(new com.lowagie.text.Paragraph("\n¡Gracias por su visita!"));
+                
                 doc.close();
             } catch (Exception e) {}
             return new ByteArrayInputStream(out.toByteArray());

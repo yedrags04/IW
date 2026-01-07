@@ -3,7 +3,7 @@ package com.example.application.views.carrito;
 import com.example.application.model.Producto;
 import com.example.application.services.ShoppingCartService;
 import com.example.application.views.MainLayout;
-import com.example.application.views.pago.PagoView;
+import com.example.application.views.pago.PagoView; // Asegúrate de importar tu vista de pago
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -20,62 +20,64 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import org.vaadin.lineawesome.LineAwesomeIconUrl;
 
-/* * VISTA DEL CARRITO DE COMPRA
- * Muestra los productos seleccionados por el cliente, permite modificar cantidades
- * y calcula el total antes de proceder al pago.
- */
 @PageTitle("Carrito")
 @Route(value = "carrito", layout = MainLayout.class)
 @Menu(order = 2, icon = LineAwesomeIconUrl.SHOPPING_CART_SOLID)
 public class CarritoView extends VerticalLayout {
 
     public CarritoView(ShoppingCartService cartService) {
-        // Configuración visual del contenedor principal
+        // ... (Configuración inicial se mantiene igual)
         setSizeFull();
         setDefaultHorizontalComponentAlignment(Alignment.CENTER);
+        setJustifyContentMode(JustifyContentMode.START);
         setPadding(true);
         setSpacing(true);
+
+        getStyle().set("margin-top", "var(--lumo-size-xl)");
+        getStyle().set("padding-left", "4rem");
 
         H1 titulo = new H1("🛍️ Tu Carrito");
         titulo.addClassNames(LumoUtility.Margin.Vertical.LARGE, LumoUtility.TextColor.PRIMARY);
         add(titulo);
 
-        // Contenedor donde se listarán los productos
         VerticalLayout itemsLayout = new VerticalLayout();
         itemsLayout.setWidth("100%");
         itemsLayout.setMaxWidth("750px"); 
+        itemsLayout.setPadding(false);
 
-        // Lógica condicional: Si el carrito está vacío, mostramos un mensaje informativo
         if (cartService.getCartContents().isEmpty()) {
             itemsLayout.add(new Span("El carrito está vacío. ¡Explora nuestros productos!"));
         } else {
-            // Iteramos sobre el contenido del carrito (Mapa de Producto -> Cantidad)
             cartService.getCartContents().forEach((Producto p, Integer cantidad) -> {
                 HorizontalLayout card = new HorizontalLayout();
                 card.setWidthFull();
                 card.setAlignItems(Alignment.CENTER);
                 card.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
-                card.addClassNames("perfil-card"); // Aplicamos el estilo de tarjeta del sistema
+                card.getStyle()
+                    .set("border-radius", "12px")
+                    .set("padding", "1rem 1.5rem")
+                    .set("background", "var(--lumo-base-color)")
+                    .set("box-shadow", "var(--lumo-box-shadow-s)")
+                    .set("border", "1px solid var(--lumo-contrast-10pct)");
 
                 Span nombre = new Span(p.getNombre());
-                nombre.getStyle().set("font-weight", "bold");
+                nombre.getStyle().set("font-weight", "bold").set("width", "150px");
 
-                // CONTROLES DE CANTIDAD (+ / -)
                 HorizontalLayout controles = new HorizontalLayout();
-                
-                // Botón para reducir cantidad o eliminar si es el último
+                controles.setAlignItems(Alignment.CENTER);
+
                 Button btnMenos = new Button(cantidad > 1 ? VaadinIcon.MINUS.create() : VaadinIcon.TRASH.create());
-                btnMenos.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
+                btnMenos.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
                 btnMenos.addClickListener(e -> {
                     cartService.removeProduct(p);
-                    UI.getCurrent().getPage().reload(); // Recargamos para refrescar totales
+                    UI.getCurrent().getPage().reload();
                 });
 
                 Span cantText = new Span(cantidad.toString());
-                
-                // Botón para incrementar cantidad
+                cantText.getStyle().set("font-weight", "bold").set("min-width", "30px").set("text-align", "center");
+
                 Button btnMas = new Button(VaadinIcon.PLUS.create());
-                btnMas.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_TERTIARY);
+                btnMas.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
                 btnMas.addClickListener(e -> {
                     cartService.addProduct(p);
                     UI.getCurrent().getPage().reload();
@@ -83,9 +85,9 @@ public class CarritoView extends VerticalLayout {
 
                 controles.add(btnMenos, cantText, btnMas);
 
-                // Cálculo del subtotal por producto
                 Span precio = new Span(String.format("%.2f €", p.getPrecio() * cantidad));
-                precio.addClassNames(LumoUtility.TextColor.SUCCESS);
+                precio.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.TextColor.SUCCESS);
+                precio.getStyle().set("min-width", "80px").set("text-align", "right");
 
                 card.add(nombre, controles, precio);
                 itemsLayout.add(card);
@@ -94,14 +96,14 @@ public class CarritoView extends VerticalLayout {
 
         add(itemsLayout);
 
-        // SECCIÓN DE FINALIZACIÓN DE COMPRA
         if (!cartService.getCartContents().isEmpty()) {
             H3 total = new H3("Total: " + String.format("%.2f €", cartService.getTotalPrice()));
+            total.addClassNames(LumoUtility.Margin.Top.LARGE, LumoUtility.FontSize.XXLARGE);
             add(total);
 
             HorizontalLayout buttons = new HorizontalLayout();
+            buttons.setSpacing(true);
 
-            // Opción para limpiar toda la sesión del carrito
             Button clear = new Button("Vaciar Carrito", VaadinIcon.TRASH.create());
             clear.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
             clear.addClickListener(e -> {
@@ -109,10 +111,13 @@ public class CarritoView extends VerticalLayout {
                 UI.getCurrent().getPage().reload();
             });
 
-            // Botón de navegación hacia la pasarela de pago
+            // --- CORRECCIÓN DE LA REDIRECCIÓN ---
             Button pagar = new Button("Proceder al Pago", VaadinIcon.CREDIT_CARD.create());
             pagar.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
-            pagar.addClickListener(e -> UI.getCurrent().navigate(PagoView.class));
+            pagar.addClickListener(e -> {
+                // Navegación segura usando la clase de la vista
+                UI.getCurrent().navigate(PagoView.class);
+            });
 
             buttons.add(clear, pagar);
             add(buttons);

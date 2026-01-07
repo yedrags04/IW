@@ -23,9 +23,6 @@ import com.example.application.repository.AppConfigRepository;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Vista de Inicio de la aplicación. Accesible por cualquier usuario.
- */
 @PageTitle("Inicio | Tu Food")
 @Route(value = "", layout = MainLayout.class)
 @AnonymousAllowed
@@ -40,7 +37,6 @@ public class HomeView extends VerticalLayout {
         this.cartService = cartService;
         this.authService = authService;
 
-        // Carga configuración global (logotipo, nombre empresa, etc.)
         AppConfig config = configRepo.findById(1L).orElse(new AppConfig());
 
         addClassName("home-view");
@@ -48,15 +44,11 @@ public class HomeView extends VerticalLayout {
         setSpacing(false);
         setWidthFull();
 
-        // Secciones de la landing page
         add(createHeroSection());
         add(createCategoriesSection());
         add(createFeaturedSection());
     }
 
-    /**
-     * Crea el banner principal con llamada a la acción.
-     */
     private Section createHeroSection() {
         Section hero = new Section();
         hero.addClassName("hero-section");
@@ -72,9 +64,6 @@ public class HomeView extends VerticalLayout {
         return hero;
     }
 
-    /**
-     * Muestra las categorías que existen actualmente en la base de datos.
-     */
     private VerticalLayout createCategoriesSection() {
         VerticalLayout section = new VerticalLayout();
         section.addClassName("section-padding");
@@ -89,7 +78,7 @@ public class HomeView extends VerticalLayout {
         categoriesContainer.setSpacing(true);
         categoriesContainer.addClassName("category-container");
 
-        // Busca categorías únicas para evitar duplicados en la interfaz
+        // DINÁMICO: Solo categorías con productos
         List<String> categorias = productoRepository.findDistinctCategorias();
         for (String cat : categorias) {
             categoriesContainer.add(createCategoryItem(cat));
@@ -99,9 +88,6 @@ public class HomeView extends VerticalLayout {
         return section;
     }
 
-    /**
-     * Crea un elemento de categoría que filtra la galería al hacer clic.
-     */
     private Div createCategoryItem(String name) {
         Div item = new Div();
         item.addClassName("category-card");
@@ -110,6 +96,7 @@ public class HomeView extends VerticalLayout {
         Span label = new Span(name);
         item.add(label);
 
+        // Al clicar, envía el parámetro ?categoria=Nombre
         item.addClickListener(e -> {
             UI.getCurrent().navigate("image-gallery", 
                 QueryParameters.simple(Map.of("categoria", name)));
@@ -118,9 +105,6 @@ public class HomeView extends VerticalLayout {
         return item;
     }
 
-    /**
-     * Muestra los 4 primeros productos como "Lo más pedido".
-     */
     private VerticalLayout createFeaturedSection() {
         VerticalLayout section = new VerticalLayout();
         section.addClassName("section-padding");
@@ -140,10 +124,10 @@ public class HomeView extends VerticalLayout {
             .set("margin", "0 auto")
             .set("justify-items", "center");
 
+        // Mostramos los últimos 4 productos como "Destacados"
         List<Producto> productos = productoRepository.findAll();
         int limit = Math.min(productos.size(), 4);
         for (int i = 0; i < limit; i++) {
-            // Reutiliza el componente de tarjeta usado en la tienda
             productsGrid.add(new ProductosViewCard(productos.get(i), cartService, authService, productoRepository));
         }
 

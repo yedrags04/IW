@@ -1,16 +1,10 @@
 package com.example.application.model;
 
-/*
- * MODELO MESA
- * Representa las mesas físicas del local. 
- * Esta clase se utiliza para controlar la disponibilidad de la sala y 
- * el balance económico actual de cada mesa abierta.
- */
 public class Mesa {
-    private Long id;              // Identificador único en la base de datos
-    private int numeroMesa;       // Número identificativo (Mesa 1, Mesa 2, etc.)
-    private String estado;        // Estado actual: "LIBRE" u "OCUPADA"
-    private double totalAcumulado; // Suma total del precio de los productos consumidos
+    private Long id;
+    private int numeroMesa;
+    private String estado;
+    private double totalAcumulado; // Campo necesario para la cuenta
 
     public Mesa() {}
 
@@ -21,7 +15,7 @@ public class Mesa {
         this.totalAcumulado = totalAcumulado;
     }
 
-    // --- Getters y Setters ---
+    // Getters y Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     

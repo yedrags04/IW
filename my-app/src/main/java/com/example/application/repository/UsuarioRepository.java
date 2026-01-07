@@ -4,16 +4,11 @@ import com.example.application.model.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
-/*
- * REPOSITORIO PARA USUARIOS
- * Gestiona el acceso de los empleados y el registro de nuevos usuarios.
- */
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     
-    // Método fundamental para el proceso de Login (AuthService).
-    // Busca un usuario por su nombre de cuenta. Retorna un Optional para gestionar nulos de forma segura.
+    // Necesario para el login y para verificar si el usuario ya existe en el registro
     Optional<Usuario> findByNombre(String nombre); 
     
-    // Se utiliza durante el registro para evitar que dos usuarios tengan el mismo correo electrónico.
+    // Opcional: Puede ser útil para validar si el email ya existe
     Optional<Usuario> findByEmail(String email); 
-}
+}   

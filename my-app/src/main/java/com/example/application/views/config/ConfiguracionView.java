@@ -14,13 +14,9 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.RolesAllowed;
 
-/* * VISTA DE CONFIGURACIÓN DEL SISTEMA
- * Exclusiva para administradores. Permite editar la marca, colores y textos 
- * del sitio web de forma dinámica.
- */
 @PageTitle("Configuración del Sistema | Tu Food")
 @Route(value = "configuracion", layout = MainLayout.class)
-@RolesAllowed("ADMIN") // Restricción de seguridad a nivel de vista
+@RolesAllowed("ADMIN")
 public class ConfiguracionView extends VerticalLayout {
 
     private final AppConfigRepository repository;
@@ -28,9 +24,9 @@ public class ConfiguracionView extends VerticalLayout {
 
     public ConfiguracionView(AppConfigRepository repository) {
         this.repository = repository;
-        // Cargamos la configuración única (ID: 1L) o creamos una por defecto
         this.config = repository.findById(1L).orElse(new AppConfig());
 
+        addClassName("perfil-view");
         setAlignItems(Alignment.CENTER);
 
         VerticalLayout card = new VerticalLayout();
@@ -39,14 +35,12 @@ public class ConfiguracionView extends VerticalLayout {
 
         H2 title = new H2("Personalizar Apariencia");
 
-        // FORMULARIO DE EDICIÓN
         FormLayout form = new FormLayout();
         TextField nombreField = new TextField("Nombre de la Marca", config.getNombreApp(), "");
         TextField colorField = new TextField("Color Primario (Hexadecimal)", config.getColorPrimario(), "");
         TextField heroTitleField = new TextField("Título Principal (Hero)", config.getHeroTitulo(), "");
         TextField heroSubField = new TextField("Subtítulo Principal", config.getHeroSubtitulo(), "");
 
-        // Botón de guardado: Actualiza el objeto 'config' y lo persiste en la BD
         Button btnGuardar = new Button("Guardar Cambios", e -> {
             config.setNombreApp(nombreField.getValue());
             config.setColorPrimario(colorField.getValue());

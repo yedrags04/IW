@@ -10,19 +10,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/* * SERVICIO DE GESTIÓN DE MESAS
- * Utiliza JdbcTemplate para realizar operaciones directas sobre la base de datos.
- * Controla la relación entre mesas y productos (comandas).
- */
 @Service
 public class MesaService {
-    private final JdbcTemplate jdbc; // Herramienta de Spring para ejecutar SQL puro
+    private final JdbcTemplate jdbc;
 
     public MesaService(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 
-    // Recupera la lista de todas las mesas ordenadas por su número
     public List<Mesa> obtenerTodas() {
         try {
             return jdbc.query("SELECT * FROM mesas ORDER BY numero_mesa ASC", (rs, rowNum) -> {
@@ -34,11 +29,10 @@ public class MesaService {
                 return m;
             });
         } catch (DataAccessException e) {
-            return List.of(); // Devuelve lista vacía en caso de error de conexión
+            return List.of();
         }
     }
 
-    // Consulta cuántas unidades de un producto específico hay en una mesa
     public int obtenerCantidadProductoEnMesa(int numeroMesa, Long productoId) {
         try {
             Integer cantidad = jdbc.queryForObject(
@@ -50,36 +44,32 @@ public class MesaService {
         }
     }
 
-    // Incrementa o decrementa la cantidad de un plato en la comanda de una mesa
     public void modificarCantidad(int numeroMesa, Long productoId, int delta, double precio) {
         try {
             int nuevaCant = obtenerCantidadProductoEnMesa(numeroMesa, productoId) + delta;
-            
-            // Si la cantidad llega a 0 o menos, eliminamos el registro de la comanda
             if (nuevaCant <= 0) {
                 jdbc.update("DELETE FROM mesa_productos WHERE mesa_id = ? AND producto_id = ?", numeroMesa, productoId);
             } else {
-                // Si existe lo actualiza, si no lo inserta (Operación Atómica)
                 jdbc.update("INSERT INTO mesa_productos (mesa_id, producto_id, cantidad) VALUES (?, ?, ?) " +
                         "ON DUPLICATE KEY UPDATE cantidad = ?", numeroMesa, productoId, nuevaCant, nuevaCant);
             }
-            // Actualizamos el balance económico de la mesa (total acumulado)
             jdbc.update("UPDATE mesas SET total_acumulado = total_acumulado + ? WHERE numero_mesa = ?", (delta * precio), numeroMesa);
         } catch (DataAccessException e) {
             e.printStackTrace();
         }
     }
 
-    // Obtiene un resumen detallado de qué productos y qué cantidad tiene una mesa actualmente
+    // --- AQUÍ ESTÁ LA CORRECCIÓN ESPECÍFICA ---
     public Map<Producto, Integer> obtenerDetalleProductosMesa(int numeroMesa, ProductoRepository repo) {
         Map<Producto, Integer> detalle = new HashMap<>();
         try {
+            // Usamos una versión de query que maneja internamente el ResultSet
             jdbc.query("SELECT producto_id, cantidad FROM mesa_productos WHERE mesa_id = ?", (rs) -> {
+                // El bloque try-catch interno soluciona el "Unhandled exception type SQLException"
                 try {
                     while (rs.next()) {
                         Long pId = rs.getLong("producto_id");
                         int cant = rs.getInt("cantidad");
-                        // Buscamos el objeto Producto completo en el repositorio
                         repo.findById(pId).ifPresent(p -> detalle.put(p, cant));
                     }
                 } catch (Exception e) {
@@ -93,11 +83,9 @@ public class MesaService {
         return detalle;
     }
 
-    // Cambia el estado (Libre/Ocupada) y limpia la comanda si se libera la mesa
     public void actualizarEstado(int numeroMesa, String nuevoEstado) {
         try {
             if ("LIBRE".equals(nuevoEstado)) {
-                // Reset de mesa: balance a 0 y borrado de productos asociados
                 jdbc.update("UPDATE mesas SET estado = ?, total_acumulado = 0.0 WHERE numero_mesa = ?", nuevoEstado, numeroMesa);
                 jdbc.update("DELETE FROM mesa_productos WHERE mesa_id = ?", numeroMesa);
             } else {

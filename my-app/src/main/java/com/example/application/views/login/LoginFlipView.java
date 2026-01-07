@@ -20,21 +20,17 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 
-/* * VISTA DE AUTENTICACIÓN DINÁMICA
- * Implementa un diseño de "tarjeta giratoria" que contiene el Login y el Registro.
- * Utiliza CSS personalizado para la animación 3D.
- */
 @PageTitle("Acceso | TuFood")
-@Route(value = "login", layout = EmptyLayout.class) 
-@AnonymousAllowed // Permite que usuarios no logueados vean esta página
+@Route(value = "login", layout = EmptyLayout.class) // CORREGIDO: "login" en lugar de ""
+@AnonymousAllowed // Permite que cualquiera vea esta página
 @CssImport("./styles/style.css") 
 @StyleSheet("https://fonts.googleapis.com/css?family=Montserrat:400,700") 
 public class LoginFlipView extends VerticalLayout {
 
     private final AuthService authService; 
-    private Div container; // Contenedor que rota mediante CSS
+    private Div container; 
 
-    // Clase interna (DTO) para mapear los datos del formulario de registro
+    // Clase interna para el formulario de registro
     public class RegistrationForm {
         private String name;
         private String email;
@@ -48,7 +44,7 @@ public class LoginFlipView extends VerticalLayout {
         public void setPassword(String password) { this.password = password; }
     }
 
-    // Definiciones SVG para iconos personalizados sin dependencias externas
+    // Constantes SVG para la interfaz
     private static final String SVG_USER_PLUS = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"96\" height=\"96\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2\"/><circle cx=\"8.5\" cy=\"7\" r=\"4\"/><line x1=\"20\" y1=\"8\" x2=\"20\" y2=\"14\"/><line x1=\"23\" y1=\"11\" x2=\"17\" y2=\"11\"/></svg>";
     private static final String SVG_ARROW_RIGHT = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><polyline points=\"12 16 16 12 12 8\"/><line x1=\"8\" y1=\"12\" x2=\"16\" y2=\"12\"/></svg>";
     private static final String SVG_LOG_IN = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"96\" height=\"96\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4\"/><polyline points=\"10 17 15 12 10 7\"/><line x1=\"15\" y1=\"12\" x2=\"3\" y2=\"12\"/></svg>";
@@ -69,17 +65,16 @@ public class LoginFlipView extends VerticalLayout {
         container = new Div(); 
         container.setId("container"); 
 
-        // Botón para alternar al panel de registro
+        // Botón para ir al registro (estará en el panel naranja frontal)
         Button registerButton = new Button("Registrarse", new Html(SVG_ARROW_RIGHT));
         registerButton.setId("register"); 
         registerButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
         
-        // Botón para alternar al panel de login
+        // Botón para volver al login (estará en el panel naranja trasero)
         Button flipLoginButton = new Button("Iniciar sesión", new Html(SVG_ARROW_LEFT));
         flipLoginButton.setId("login"); 
         flipLoginButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
 
-        // Disparadores de la animación CSS (añaden/quitan la clase 'active')
         registerButton.addClickListener(event -> container.addClassName("active"));
         flipLoginButton.addClickListener(event -> container.removeClassName("active")); 
         
@@ -91,11 +86,9 @@ public class LoginFlipView extends VerticalLayout {
         );
         
         add(container);
-        // Perspectiva para el efecto 3D
         getElement().getStyle().set("perspective", "1500px");
     }
     
-    // Crea el formulario de inicio de sesión
     private Div createLoginPanel() {
         Div loginPanel = new Div();
         loginPanel.addClassName("login");
@@ -117,9 +110,8 @@ public class LoginFlipView extends VerticalLayout {
         loginBtn.setWidthFull();
         
         loginBtn.addClickListener(e -> {
-            // Lógica de autenticación mediante el AuthService
             if (authService.authenticate(username.getValue(), password.getValue())) {
-                UI.getCurrent().navigate(""); // Redirige a la raíz (HomeView)
+                UI.getCurrent().navigate(""); // Navega a la Home (ruta vacía)
             } else {
                 errorLabel.setVisible(true);
             }
@@ -130,7 +122,6 @@ public class LoginFlipView extends VerticalLayout {
         return loginPanel;
     }
 
-    // Crea el panel de información frontal (Giro)
     private Div createPageFront(Button btn) {
         Div pageFront = new Div();
         pageFront.addClassNames("page", "front");
@@ -141,7 +132,6 @@ public class LoginFlipView extends VerticalLayout {
         return pageFront;
     }
 
-    // Crea el panel de información trasero (Giro)
     private Div createPageBack(Button btn) {
         Div pageBack = new Div();
         pageBack.addClassNames("page", "back");
@@ -152,7 +142,6 @@ public class LoginFlipView extends VerticalLayout {
         return pageBack;
     }
     
-    // Crea el formulario de registro de nuevos usuarios
     private Div createRegisterPanel() {
         Div registerPanel = new Div();
         registerPanel.addClassName("register");
@@ -162,6 +151,7 @@ public class LoginFlipView extends VerticalLayout {
         content.setHeightFull();
         content.setJustifyContentMode(JustifyContentMode.CENTER); 
         content.setAlignItems(Alignment.CENTER);
+        content.setSpacing(true);
 
         H1 title = new H1("Sign Up");
 
@@ -176,13 +166,14 @@ public class LoginFlipView extends VerticalLayout {
         password.setWidthFull();
 
         Div feedbackLabel = new Div();
+        feedbackLabel.getStyle().set("font-size", "0.8rem").set("margin", "5px 0");
         feedbackLabel.setVisible(false);
 
         Button signUpBtn = new Button("Crear Cuenta");
         signUpBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
         signUpBtn.setWidthFull();
+        signUpBtn.getStyle().set("margin-top", "2.5rem"); 
 
-        // El Binder sincroniza el formulario con el objeto Java de forma automática
         Binder<RegistrationForm> binder = new Binder<>(RegistrationForm.class);
 
         signUpBtn.addClickListener(event -> {
@@ -192,7 +183,7 @@ public class LoginFlipView extends VerticalLayout {
                 String result = authService.register(name.getValue(), email.getValue(), password.getValue());
                 if ("SUCCESS".equals(result)) {
                     Notification.show("¡Éxito! Inicie sesión.");
-                    container.removeClassName("active"); // Vuelve al panel frontal
+                    container.removeClassName("active"); 
                     binder.readBean(new RegistrationForm()); 
                 } else {
                     feedbackLabel.setText(result);
